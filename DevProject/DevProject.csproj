@@ -31,4 +31,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4" />
 </ItemGroup>
 
+<ItemGroup>
+  <_ContentIncludedByDefault Remove="client-app\angular.json" />
+  <_ContentIncludedByDefault Remove="client-app\package.json" />
+  <_ContentIncludedByDefault Remove="client-app\tsconfig.json" />
+</ItemGroup>
+
 </Project>
