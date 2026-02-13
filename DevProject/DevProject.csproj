@@ -37,4 +37,11 @@
   <_ContentIncludedByDefault Remove="client-app\tsconfig.json" />
 </ItemGroup>
 
+<ItemGroup>
+  <Folder Include="Business\" />
+  <Folder Include="Data\" />
+  <Folder Include="Middleware\" />
+  <Folder Include="Resources\" />
+</ItemGroup>
+
 </Project>
