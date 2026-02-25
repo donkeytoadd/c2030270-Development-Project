@@ -31,7 +31,7 @@
                 
                 if (!allowedExtensions.Contains(fileExtension))
                 {
-                    return BadRequest($"Only {string.Join(",", allowedExtensions)} are allowed");
+                    return BadRequest($"Only {string.Join(",", allowedExtensions)} file extensions are allowed");
                 }
 
                 if (file.Length > maxFileSize)

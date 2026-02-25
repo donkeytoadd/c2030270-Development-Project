@@ -31,8 +31,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseCors(myAllowSpecificOrigins);
-
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -43,6 +41,7 @@ app.UseSwaggerUI(c =>
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseCors(myAllowSpecificOrigins);
 app.UseAuthorization();
 app.MapControllers();
 

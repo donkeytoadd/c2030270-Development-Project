@@ -1,0 +1,104 @@
+<div class="upload-page">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">SG</div>
+      <span class="sidebar-title">Specification Generator</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <h1 class="title">Upload Spreadsheet</h1>
+      <p class="subtitle">Select an Excel file to convert into a TM Forum-compliant JSON specification.</p>
+    </div>
+
+    @if(state.status == 'idle' || state.status == 'error'){
+      <div
+        class="drop-zone"
+        [class.drop-zone-dragging]="isDragging"
+        [class.drop-zone-error]="state.status == 'error'"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="openFilePicker()"
+      >
+      <input
+        #fileInput
+        type="file"
+        [accept]="acceptedTypes"
+        class="drop-zone-input"
+        (change)="onFileSelected($event)"
+      />
+
+      <mat-icon class="drop-zone-icon">{{ state.status == 'error' ? 'error_outline' : 'cloud_upload' }}</mat-icon>
+
+      <p class="drop-zone-headline">{{ state.status == 'error' ? 'Something went wrong' : 'Drag and drop your file here' }}</p>
+        @if (state.status !== 'error'){
+          <p class="drop-zone-sub">or <span class="drop-zone-link">browse files</span> to upload</p>
+        }
+        @if (state.status !== 'error'){
+          <p class="drop-zone-error-msg">{{ state.message }}</p>
+        }
+        @if (state.status !== 'error'){
+          <p class="drop-zone-retry">Click to try again</p>
+        }
+    </div>
+    }
+
+    @if (state.status == 'selected'){
+    <mat-card class="file-card" appearance="outlined">
+      <mat-card-content>
+        <div class="file-card-body">
+          <div class="file-car-icon-wrap">
+            <mat-icon class="file-card-icon">description</mat-icon>
+          </div>
+          <div class="file-card-info">
+            <p class="file-card-name">{{ selectedFile?.name }}</p>
+            <p class="file-card-meta">{{ formattedFileSize }} &nbsp;·&nbsp; Excel Workbook</p>
+          </div>
+          <div class="file-card-actions">
+            <button mat-stroked-button (click)="reset()">Remove</button>
+            <button mat-flat-button color="primary" (click)="uploadFile()">
+              <mat-icon>cloud_upload</mat-icon>Upload
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    }
+
+    @if (state.status == 'uploading'){
+    <mat-card class="status-card" appearance="outlined">
+      <mat-card-content>
+        <div class="status-card-body">
+          <div class="status-card-top">
+            <span class="status-card-label">Uploading {{ selectedFile?.name }}</span></div>
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          <p class="status-card-hint">Please keep this tab open until the upload completes.</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    }
+
+    @if (state.status == 'success'){
+    <mat-card class="status-card status-card-success" appearance="outlined">
+      <mat-card-content>
+        <div class="status-card-body status-card-body-centered">
+          <div class="success-icon-wrap">
+            <mat-icon class="success-icon">check_circle</mat-icon>
+          </div>
+          <p class="status-card-label">Upload successful</p>
+          <p class="status-card-hint">{{ selectedFile?.name }} was received. Proceed to map your fields.</p>
+          <div class="status-card-actions">
+            <button mat-stroked-button (click)="reset()">Upload another</button>
+<!--            <button mat-flat-button color="primary">-->
+<!--              Continue to mapping-->
+<!--              <mat-icon iconPositionEnd>arrow_forward</mat-icon>-->
+<!--            </button>-->
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    }
+  </main>
+</div>
