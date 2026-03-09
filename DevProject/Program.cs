@@ -15,6 +15,25 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
+
+builder.Services.Scan(scan => scan
+    .FromAssemblies(typeof(Program).Assembly)
+    .AddClasses(c => c.Where(t =>
+        t.Name.EndsWith("Getter") ||
+        t.Name.EndsWith("Creator") ||
+        t.Name.EndsWith("Updater") ||
+        t.Name.EndsWith("Query") ||
+        t.Name.EndsWith("Middleware") ||
+        t.Name.EndsWith("Processor")
+    ))
+    .AsImplementedInterfaces()
+    .WithScopedLifetime()
+);
+
 var myAllowSpecificOrigins = "myAllowSpecificOrigins";
 
 builder.Services.AddCors(options =>

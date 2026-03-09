@@ -27,7 +27,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Business\" />
       <Folder Include="Data\" />
     </ItemGroup>
 

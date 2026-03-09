@@ -10,6 +10,7 @@
     <PackageReference Include="Autofac" Version="8.4.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="Microsoft.AspNet.StaticFiles" Version="1.0.0-rc1-final" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="6.0.0-preview.4.21253.5" />
@@ -42,10 +43,7 @@
 </ItemGroup>
 
 <ItemGroup>
-  <Folder Include="Business\" />
-  <Folder Include="Data\" />
   <Folder Include="Middleware\" />
-  <Folder Include="Resources\" />
 </ItemGroup>
 
 </Project>
