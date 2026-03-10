@@ -33,12 +33,12 @@ namespace DevProject.Tests.Business.Processors
                 .Returns(idValue)
                 .Returns(nameValue);
 
-            var dataRows = BuildDataRows(ws =>
+            var dataRows = BuildDataRows(worksheet =>
             {
-                ws.Cell(1, 1).Value = "Id";
-                ws.Cell(1, 2).Value = "Name";
-                ws.Cell(2, 1).Value = 1;
-                ws.Cell(2, 2).Value = "Alice";
+                worksheet.Cell(1, 1).Value = "Id";
+                worksheet.Cell(1, 2).Value = "Name";
+                worksheet.Cell(2, 1).Value = 1;
+                worksheet.Cell(2, 2).Value = "Alice";
             });
 
             var sut = this.CreateTestSubject();
@@ -46,7 +46,7 @@ namespace DevProject.Tests.Business.Processors
             var result = sut.Process(dataRows, columns);
 
             Assert.Single(result);
-            Assert.Equal(idValue,   result[0]["Id"]);
+            Assert.Equal(idValue, result[0]["Id"]);
             Assert.Equal(nameValue, result[0]["Name"]);
 
             this.automocker.GetMock<ICellValueGetter>()

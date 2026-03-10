@@ -10,7 +10,7 @@ namespace DevProject.Tests.Business.Getters
             var workbook  = new XLWorkbook();
             var worksheet = workbook.AddWorksheet("Sheet1");
             configure(worksheet);
-            return worksheet.RangeUsed().RowsUsed().First();
+            return worksheet.RangeUsed()!.RowsUsed().First();
         }
 
         [Fact]

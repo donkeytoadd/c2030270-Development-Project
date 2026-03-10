@@ -4,10 +4,10 @@
 
     public class FileUploadResponse
     {
-        public string FileId { get; set; }
-        public string SheetName { get; set; }
-        public List<String> ColumnNames { get; set; }
-        public List<Dictionary<string, CellValue>> Rows { get; set; }
+        public required string FileId { get; set; }
+        public required string SheetName { get; set; }
+        public required List<String> ColumnNames { get; set; }
+        public required List<Dictionary<string, CellValue>> Rows { get; set; }
         public int? TotalRows { get; set; }
     }
 }
