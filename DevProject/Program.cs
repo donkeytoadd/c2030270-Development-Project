@@ -1,8 +1,7 @@
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddHealthChecks();
 
 builder.Services.AddControllers();
 
@@ -19,6 +18,17 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
+
+//check currently validates the local directory.
+// when migrating to cloud, will replace this with a connectivity check for the chosen provider (e.g Azure Blob Storage, AWS S3)
+builder.Services.AddHealthChecks()
+    .AddCheck("file-storage", () =>
+    {
+        var uploadsPath = Path.Combine("wwwroot", "uploads");
+        return Directory.Exists(uploadsPath)
+            ? HealthCheckResult.Healthy()
+            : HealthCheckResult.Unhealthy("Uploads directory is missing.");
+    });
 
 builder.Services.Scan(scan => scan
     .FromAssemblies(typeof(Program).Assembly)
@@ -61,7 +71,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 app.UseCors(myAllowSpecificOrigins);
+
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

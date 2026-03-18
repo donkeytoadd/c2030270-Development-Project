@@ -1,6 +1,7 @@
 ﻿namespace DevProject.Business.Processors
 {
     using ClosedXML.Excel;
+    using Controllers;
     using Data.Entities;
     using Data.Exceptions;
     using Getters.Interfaces;
@@ -9,13 +10,16 @@
 
     public class SpreadsheetProcessor : ISpreadsheetProcessor
     {
+        private readonly ILogger<SpreadsheetProcessor> logger;
         private readonly IColumnGetter columnGetter;
         private readonly IRowProcessor rowProcessor;
 
         public SpreadsheetProcessor(
+            ILogger<SpreadsheetProcessor> logger,
             IColumnGetter columnGetter,
             IRowProcessor rowProcessor)
         {
+            this.logger = logger;
             this.columnGetter = columnGetter;
             this.rowProcessor = rowProcessor;
         }
@@ -30,6 +34,7 @@
             }
             catch (Exception ex)
             {
+                this.logger.LogInformation("Error processing workbook with the file stream.");
                 throw new ProcessExcelException($"The file '{fileName}' could not be read. Please ensure it is a valid, non-password-protected Excel workbook (.xlsx).", ex);
             }
 

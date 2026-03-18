@@ -21,11 +21,11 @@
 
             foreach (var row in dataRows)
             {
-                var rowDict = BuildRowDictionary(row, columnMap);
+                var rowDictionary = BuildRowDictionary(row, columnMap);
 
-                if (!IsEmptyRow(rowDict))
+                if (!IsEmptyRow(rowDictionary))
                 {
-                    result.Add(rowDict);
+                    result.Add(rowDictionary);
                 }
             }
 
@@ -34,14 +34,14 @@
         
         private Dictionary<string, CellValue> BuildRowDictionary(IXLRangeRow row, List<Column> columnMap)
         {
-            var dict = new Dictionary<string, CellValue>();
+            var dictionary = new Dictionary<string, CellValue>();
 
             foreach (var column in columnMap)
             {
-                dict[column.Name] = this.cellValueGetter.GetValue(row.Cell(column.ColumnIndex));
+                dictionary[column.Name] = this.cellValueGetter.GetValue(row.Cell(column.ColumnIndex));
             }
 
-            return dict;
+            return dictionary;
         }
 
         private bool IsEmptyRow(Dictionary<string, CellValue> row)
