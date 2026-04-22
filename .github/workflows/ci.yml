@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches: [ main ]
@@ -15,84 +14,70 @@ jobs:
   backend:
     name: .NET Build & Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
-
+          dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Restore
         run: dotnet restore DevelopmentProject.sln
-
       - name: Build
         run: dotnet build DevelopmentProject.sln --no-restore --configuration Release
-
       - name: Test
         run: dotnet test DevProject.Tests/DevProject.Tests.csproj --no-build --configuration Release --verbosity normal
 
   frontend:
     name: Angular Build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: DevProjectUI/package-lock.json
-
-      - name: Install dependencies
-        working-directory: DevProjectUI
-        run: npm ci
-
-      - name: Build
-        working-directory: DevProjectUI
-        run: npm run build
-        
-    deploy:
-    needs: [backend, frontend]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: DevProjectUI/package-lock.json
+      - name: Install dependencies
+        working-directory: DevProjectUI
+        run: npm ci
+      - name: Build
+        working-directory: DevProjectUI
+        run: npm run build
 
+  deploy:
+    name: Deploy to Azure App Service
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - name: Build Angular
         working-directory: DevProjectUI
         run: |
           npm ci
           npm run build -- --configuration production
-
       - name: Verify Angular build output
         run: |
           ls -la DevProject/wwwroot/
           test -f DevProject/wwwroot/index.html
-
       - name: Publish .NET
         run: dotnet publish DevProject/DevProject.csproj -c Release -o ./publish
-
       - name: Verify publish output contains wwwroot
         run: |
           ls -la ./publish/wwwroot/
           test -f ./publish/wwwroot/index.html
-
       - name: Deploy to App Service
         uses: azure/webapps-deploy@v3
         with:
