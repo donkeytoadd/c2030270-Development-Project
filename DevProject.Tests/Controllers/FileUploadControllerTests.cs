@@ -1,6 +1,7 @@
 namespace DevProject.Tests.Controllers
 {
     using DevProject.Business.Processors.Interfaces;
+    using DevProject.Business.Storage.Interfaces;
     using DevProject.Controllers;
     using DevProject.Data.Entities;
     using DevProject.Data.Exceptions;
@@ -14,82 +15,129 @@ namespace DevProject.Tests.Controllers
         private FileUploadRequest CreateMockFile(string fileName, long fileSize, string content)
         {
             var mockFile = new Mock<IFormFile>();
-            var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+            var stream   = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
 
             mockFile.Setup(f => f.FileName).Returns(fileName);
             mockFile.Setup(f => f.Length).Returns(fileSize);
             mockFile.Setup(f => f.OpenReadStream()).Returns(stream);
             mockFile.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
+                    .Returns(Task.CompletedTask);
 
-            var mockRequest = new FileUploadRequest()
+            return new FileUploadRequest { File = mockFile.Object };
+        }
+
+        private static ParsedWorkbook BuildWorkbook(string workbookName, params ParsedExcelData[] sheets) =>
+            new ParsedWorkbook
             {
-                File = mockFile.Object
+                WorkbookName = workbookName,
+                Sheets       = new List<ParsedExcelData>(sheets)
             };
 
-            return mockRequest;
+        private void SetupFileStorageSave(string returnedFileId = "fake-id.xlsx")
+        {
+            automocker.GetMock<IFileStorage>()
+                .Setup(x => x.SaveAsync(
+                    It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(returnedFileId);
         }
 
         [Fact]
         public async Task UploadFileReturnsOkWithParsedData()
         {
-            var parsedData = new ParsedExcelData
-            {
-                SpreadsheetName = "Products",
-                ColumnNames = new List<string>
+            var workbook = BuildWorkbook("products",
+                new ParsedExcelData
                 {
-                    "Id", 
-                    "Name"
-                },
-                Rows = new List<Dictionary<string, CellValue>>(),
-                TotalRows = 0
-            };
+                    SpreadsheetName = "Products",
+                    ColumnNames     = new List<string> { "Id", "Name" },
+                    Rows            = new List<Dictionary<string, CellValue>>(),
+                    TotalRows       = 0
+                });
 
-            this.automocker.GetMock<ISpreadsheetProcessor>()
+            SetupFileStorageSave("fake-id.xlsx");
+            automocker.GetMock<ISpreadsheetProcessor>()
                 .Setup(x => x.Process(It.IsAny<Stream>(), It.IsAny<string>()))
-                .Returns(parsedData);
+                .Returns(workbook);
 
-            var mockFile = this.CreateMockFile("products.xlsx", 1024, "mock content");
-            
-            var sut = this.CreateTestSubject();
+            var mockFile = CreateMockFile("products.xlsx", 1024, "mock content");
 
+            var sut    = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
 
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var json= System.Text.Json.JsonSerializer.Serialize(okResult.Value);
-            var root = System.Text.Json.JsonDocument.Parse(json).RootElement;
+            var json     = System.Text.Json.JsonSerializer.Serialize(okResult.Value);
+            var root     = System.Text.Json.JsonDocument.Parse(json).RootElement;
 
-            Assert.Equal("Products", root.GetProperty("SheetName").GetString());
+            Assert.Equal("products", root.GetProperty("WorkbookName").GetString());
             Assert.EndsWith(".xlsx", root.GetProperty("FileId").GetString());
-            Assert.Equal(2,      root.GetProperty("ColumnNames").GetArrayLength());
-            Assert.Equal("Id",   root.GetProperty("ColumnNames")[0].GetString());
-            Assert.Equal("Name", root.GetProperty("ColumnNames")[1].GetString());
-            Assert.Equal(0,      root.GetProperty("Rows").GetArrayLength());
+            Assert.Equal(1, root.GetProperty("TotalSheets").GetInt32());
+
+            var firstSheet = root.GetProperty("Sheets")[0];
+            Assert.Equal("Products", firstSheet.GetProperty("SheetName").GetString());
+            Assert.Equal(2, firstSheet.GetProperty("ColumnNames").GetArrayLength());
+            Assert.Equal("Id",   firstSheet.GetProperty("ColumnNames")[0].GetString());
+            Assert.Equal("Name", firstSheet.GetProperty("ColumnNames")[1].GetString());
+            Assert.Equal(0, firstSheet.GetProperty("TotalRows").GetInt32());
+        }
+
+        [Fact]
+        public async Task UploadFileReturnsOkWithMultipleSheets()
+        {
+            var workbook = BuildWorkbook("catalogue",
+                new ParsedExcelData
+                {
+                    SpreadsheetName = "Service",
+                    ColumnNames     = new List<string> { "name", "description" },
+                    Rows            = new List<Dictionary<string, CellValue>>(),
+                    TotalRows       = 0
+                },
+                new ParsedExcelData
+                {
+                    SpreadsheetName = "RelatedParty",
+                    ColumnNames     = new List<string> { "id", "role" },
+                    Rows            = new List<Dictionary<string, CellValue>>(),
+                    TotalRows       = 0
+                });
+
+            SetupFileStorageSave("fake-id.xlsx");
+            automocker.GetMock<ISpreadsheetProcessor>()
+                .Setup(x => x.Process(It.IsAny<Stream>(), It.IsAny<string>()))
+                .Returns(workbook);
+
+            var mockFile = CreateMockFile("catalogue.xlsx", 2048, "mock content");
+
+            var sut    = CreateTestSubject();
+            var result = await sut.UploadFile(mockFile);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var json     = System.Text.Json.JsonSerializer.Serialize(okResult.Value);
+            var root     = System.Text.Json.JsonDocument.Parse(json).RootElement;
+
+            Assert.Equal(2, root.GetProperty("TotalSheets").GetInt32());
+            Assert.Equal("Service",      root.GetProperty("Sheets")[0].GetProperty("SheetName").GetString());
+            Assert.Equal("RelatedParty", root.GetProperty("Sheets")[1].GetProperty("SheetName").GetString());
         }
 
         [Fact]
         public async Task UploadFileReturnsBadRequestForEmptyFile()
         {
-            var mockFile = this.CreateMockFile("file.xlsx", 0, "mock");
-            
-            var sut = this.CreateTestSubject();
+            var mockFile = CreateMockFile("file.xlsx", 0, "mock");
 
+            var sut    = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
-            
-            var badRequest  = Assert.IsType<BadRequestObjectResult>(result);
+
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             Assert.Equal("No File Selected", badRequest.Value);
         }
 
         [Fact]
         public async Task UploadFileReturnsBadRequestForOversizedFile()
         {
-            var mockFile = this.CreateMockFile("file.xlsx", 11 * 1024 * 1024, "mock");
-            
-            var sut = this.CreateTestSubject();
-            
+            var mockFile = CreateMockFile("file.xlsx", 11 * 1024 * 1024, "mock");
+
+            var sut    = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
-            var badRequest  = Assert.IsType<BadRequestObjectResult>(result);
-            
+
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             Assert.Contains("File size cannot be larger than", badRequest.Value!.ToString());
         }
 
@@ -99,10 +147,9 @@ namespace DevProject.Tests.Controllers
         [InlineData("image.png")]
         public async Task UploadFileReturnsBadRequestWithInvalidFileExtension(string fileName)
         {
-            var mockFile = this.CreateMockFile(fileName, 1024, "mock content");
+            var mockFile = CreateMockFile(fileName, 1024, "mock content");
 
-            var sut = this.CreateTestSubject();
-
+            var sut    = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
 
             Assert.IsType<BadRequestObjectResult>(result);
@@ -111,14 +158,14 @@ namespace DevProject.Tests.Controllers
         [Fact]
         public async Task UploadFileReturnsUnprocessableEntityWhenProcessingFails()
         {
-            this.automocker.GetMock<ISpreadsheetProcessor>()
+            SetupFileStorageSave();
+            automocker.GetMock<ISpreadsheetProcessor>()
                 .Setup(x => x.Process(It.IsAny<Stream>(), It.IsAny<string>()))
                 .Throws(new ProcessExcelException("Invalid workbook structure"));
 
-            var mockFile = this.CreateMockFile("file.xlsx", 1024, "mock content");
+            var mockFile = CreateMockFile("file.xlsx", 1024, "mock content");
 
-            var sut = this.CreateTestSubject();
-
+            var sut    = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
 
             var unprocessable = Assert.IsType<UnprocessableEntityObjectResult>(result);
@@ -131,24 +178,42 @@ namespace DevProject.Tests.Controllers
         [Fact]
         public async Task UploadFileReturnsBadRequestWhenUnexpectedExceptionThrown()
         {
-            var mockFile = this.automocker.GetMock<IFormFile>();
+            var mockFile = automocker.GetMock<IFormFile>();
 
             mockFile.Setup(x => x.FileName).Returns("file.xlsx");
             mockFile.Setup(x => x.Length).Returns(1024);
             mockFile.Setup(x => x.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new Exception("Unexpected error"));
+                    .ThrowsAsync(new Exception("Unexpected error"));
 
-            var mockRequest = new FileUploadRequest()
-            {
-                File = mockFile.Object
-            };
+            var mockRequest = new FileUploadRequest { File = mockFile.Object };
 
-            var sut = this.CreateTestSubject();
-
+            var sut    = CreateTestSubject();
             var result = await sut.UploadFile(mockRequest);
 
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             Assert.Equal("Unexpected error", badRequest.Value!.ToString());
+        }
+
+        [Fact]
+        public async Task UploadFileDoesNotTouchFilesystemDirectly()
+        {
+            SetupFileStorageSave("saved-file.xlsx");
+            automocker.GetMock<ISpreadsheetProcessor>()
+                .Setup(x => x.Process(It.IsAny<Stream>(), It.IsAny<string>()))
+                .Returns(BuildWorkbook("wb", new ParsedExcelData
+                {
+                    SpreadsheetName = "Sheet1",
+                    ColumnNames     = new List<string>(),
+                    Rows            = new List<Dictionary<string, CellValue>>()
+                }));
+
+            var mockFile = CreateMockFile("test.xlsx", 512, "content");
+            var sut      = CreateTestSubject();
+            await sut.UploadFile(mockFile);
+
+            automocker.GetMock<IFileStorage>()
+                .Verify(x => x.SaveAsync(
+                    It.IsAny<Stream>(), ".xlsx", It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
