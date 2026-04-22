@@ -1,9 +1,9 @@
-﻿namespace DevProject.Business.Processors.Interfaces
+namespace DevProject.Business.Processors.Interfaces
 {
     using Data.Entities;
 
     public interface ISpreadsheetProcessor
     {
-        ParsedExcelData Process(Stream fileStream, string fileName);
+        ParsedWorkbook Process(Stream fileStream, string fileName);
     }
 }

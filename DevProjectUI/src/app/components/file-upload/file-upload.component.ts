@@ -1,10 +1,12 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { FileUploadService } from '../../services/file-upload.service';
-import {MatCard, MatCardContent} from '@angular/material/card';
-import {MatIcon} from '@angular/material/icon';
-import {MatProgressBar} from '@angular/material/progress-bar';
-import {MatButton} from '@angular/material/button';
-import {UploadState} from '../../models/upload-state.model';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatButton } from '@angular/material/button';
+import { UploadState } from '../../models/upload-state.model';
+import { ParsedWorkbook } from '../../models/parsed-sheet.model';
 
 @Component({
   selector: 'app-file-upload',
@@ -25,11 +27,16 @@ export class FileUploadComponent {
   readonly maxFileSize = 10 * 1024 * 1024;
 
   selectedFile: File | null = null;
-  state: UploadState = { status: 'idle' };
+  state = signal<UploadState>({ status: 'idle' });
   uploadProgress = 0;
   isDragging = false;
 
-  constructor(private fileUploadService: FileUploadService) {}
+  private parsedWorkbook: ParsedWorkbook | null = null;
+
+  constructor(
+    private fileUploadService: FileUploadService,
+    private router: Router
+  ) {}
 
   openFilePicker(): void {
     this.fileInputRef.nativeElement.click();
@@ -38,7 +45,9 @@ export class FileUploadComponent {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     this.validateFile(file);
   }
 
@@ -59,7 +68,7 @@ export class FileUploadComponent {
     this.isDragging = false;
     const file = event.dataTransfer?.files?.[0];
     if (!file) {
-      return
+      return;
     }
     this.validateFile(file);
   }
@@ -69,17 +78,17 @@ export class FileUploadComponent {
     const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
 
     if (!validExtensions.includes(extension)) {
-      this.state = { status: 'error', message: 'Only .xlsx and .xls files are supported.' };
+      this.state.set({ status: 'error', message: 'Only .xlsx and .xls files are supported.' });
       return;
     }
 
     if (file.size > this.maxFileSize) {
-      this.state = { status: 'error', message: 'File exceeds the 10 MB size limit.' };
+      this.state.set({ status: 'error', message: 'File exceeds the 10 MB size limit.' });
       return;
     }
 
     this.selectedFile = file;
-    this.state = { status: 'selected' };
+    this.state.set({ status: 'selected' });
   }
 
   uploadFile(): void {
@@ -88,23 +97,30 @@ export class FileUploadComponent {
     const formData = new FormData();
     formData.append('file', this.selectedFile, this.selectedFile.name);
 
-    this.state = { status: 'uploading' };
+    this.state.set({ status: 'uploading' });
 
     this.fileUploadService.UploadFile(formData).subscribe({
-      next: () => {
-        this.state = { status: 'success', message: 'File uploaded successfully.' };
+      next: (data) => {
+        this.parsedWorkbook = data;
+        this.state.set({ status: 'success', message: 'File uploaded successfully.' });
       },
       error: (err) => {
         const msg = err?.error?.message ?? 'Upload failed. Please try again.';
-        this.state = { status: 'error', message: msg };
+        this.state.set({ status: 'error', message: msg });
       },
     });
+  }
+
+  continueToMapping(): void {
+    if (!this.parsedWorkbook) return;
+    this.router.navigate(['/convert'], { state: this.parsedWorkbook });
   }
 
   reset(): void {
     this.selectedFile = null;
     this.uploadProgress = 0;
-    this.state = { status: 'idle' };
+    this.parsedWorkbook = null;
+    this.state.set({ status: 'idle' });
     if (this.fileInputRef) {
       this.fileInputRef.nativeElement.value = '';
     }
@@ -112,14 +128,14 @@ export class FileUploadComponent {
 
   get formattedFileSize(): string {
     if (!this.selectedFile) return '';
-    const bytes = this.selectedFile.size;
+    const fileSize = this.selectedFile.size;
 
-    if (bytes < 1024) {
-      return `${bytes} B`;
+    if (fileSize < 1024) {
+      return `${fileSize} B`;
     }
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`;
+    if (fileSize < 1024 * 1024) {
+      return `${(fileSize / 1024).toFixed(1)} KB`;
     }
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    return `${(fileSize / (1024 * 1024)).toFixed(2)} MB`;
   }
 }

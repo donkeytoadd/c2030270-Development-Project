@@ -1,0 +1,162 @@
+<div class="conversion-page">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">SG</div>
+      <span class="sidebar-title">Specification Generator</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <h1 class="title">Configure Conversion</h1>
+      <p class="subtitle">
+        All sheets in <strong>{{ workbookName || 'your workbook' }}</strong> will be combined into one TM Forum JSON resource.
+      </p>
+    </div>
+
+    @if (status() === 'idle' || status() === 'error') {
+      <mat-card appearance="outlined" class="config-card">
+        <mat-card-content>
+          <div class="config-body">
+
+            <!-- API / template selector -->
+            <div class="config-field">
+              <label class="config-label">TM Forum Open API</label>
+              <p class="config-hint">
+                Select the target API. The system will read every worksheet in your workbook
+                and assemble them into a single compliant JSON resource.
+              </p>
+              <mat-form-field appearance="outline" class="config-input">
+                <mat-label>API</mat-label>
+                <mat-select [(ngModel)]="selectedApiId" name="selectedApiId">
+                  @for (tmpl of mappingTemplates(); track tmpl.apiId) {
+                    <mat-option [value]="tmpl.apiId">{{ tmpl.apiId }} – {{ tmpl.apiName }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              @if (selectedTemplate) {
+                <p class="config-api-detail">
+                  Resource type: <strong>{{ selectedTemplate.rootResourceType }}</strong>
+                  @if (selectedTemplate.rootBaseType) {
+                    &nbsp;·&nbsp; Base type: <strong>{{ selectedTemplate.rootBaseType }}</strong>
+                  }
+                  &nbsp;·&nbsp; Path: <code>{{ selectedTemplate.basePath }}/{{ selectedTemplate.resourceCollectionPath }}</code>
+                </p>
+              }
+            </div>
+
+            <!-- Sheet coverage checklist -->
+            @if (sheetCoverage.length) {
+              <div class="config-field">
+                <label class="config-label">Expected worksheets</label>
+                <p class="config-hint">
+                  The mapping template for this API expects the worksheet names below.
+                  Sheets marked <span class="badge-missing">missing</span> will be skipped — add them to your workbook to include that data.
+                </p>
+                <div class="sheet-coverage">
+                  @for (entry of sheetCoverage; track entry.sheetName) {
+                    <div class="sheet-coverage-row" [class.sheet-present]="entry.present" [class.sheet-missing]="!entry.present">
+                      <mat-icon class="sheet-icon">{{ entry.present ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                      <span class="sheet-name">{{ entry.sheetName }}</span>
+                      <span class="sheet-pattern">{{ entry.pattern }}</span>
+                      @if (!entry.present) {
+                        <span class="badge-missing">missing</span>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (status() === 'error') {
+              <p class="error-msg">{{ errorMessage() }}</p>
+            }
+
+            <div class="config-actions">
+              <button mat-stroked-button (click)="startOver()">Back</button>
+              <button mat-flat-button color="primary" (click)="convert()" [disabled]="!selectedApiId">
+                <mat-icon>bolt</mat-icon>Convert
+              </button>
+            </div>
+
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (status() === 'converting') {
+      <mat-card appearance="outlined" class="status-card">
+        <mat-card-content>
+          <div class="status-body">
+            <span class="status-label">Assembling all sheets into {{ selectedTemplate?.rootResourceType ?? 'resource' }}…</span>
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (status() === 'converted' && conversionResult(); as result) {
+      <mat-card appearance="outlined" class="result-card">
+        <mat-card-content>
+          <div class="result-header">
+            <div class="result-meta">
+              <mat-icon class="result-icon">check_circle</mat-icon>
+              <div>
+                <p class="result-title">{{ result.resourceType }} resource assembled</p>
+                <p class="result-subtitle">{{ result.apiId }} – {{ result.apiName }} &nbsp;·&nbsp; from <strong>{{ result.workbookName }}</strong></p>
+              </div>
+            </div>
+            <div class="result-actions">
+              <button mat-stroked-button (click)="startOver()">Upload another</button>
+              <button mat-flat-button color="primary" (click)="downloadJson()">
+                <mat-icon>download</mat-icon>Download JSON
+              </button>
+            </div>
+          </div>
+
+          @if (result.warnings?.length) {
+            <div class="warnings-panel">
+              <div class="warnings-header">
+                <mat-icon>info</mat-icon>
+                <span>{{ result.warnings.length }} warning{{ result.warnings.length === 1 ? '' : 's' }}</span>
+              </div>
+              <ul class="warnings-list">
+                @for (warning of result.warnings; track $index) {
+                  <li>{{ warning }}</li>
+                }
+              </ul>
+            </div>
+          }
+
+          <div class="validation-panel" [class.validation-valid]="result.validation.isValid" [class.validation-invalid]="!result.validation.isValid">
+            <div class="validation-header">
+              @if (result.validation.isValid) {
+                <mat-icon class="validation-icon">verified</mat-icon>
+                <span class="validation-title">Schema valid — output complies with {{ result.apiId }}</span>
+              } @else {
+                <mat-icon class="validation-icon">warning</mat-icon>
+                <span class="validation-title">{{ result.validation.totalIssues }} schema issue{{ result.validation.totalIssues === 1 ? '' : 's' }} against {{ result.apiId }}</span>
+              }
+              <span class="compliance-badge" [class.compliance-high]="result.validation.compliancePercentage >= 95" [class.compliance-low]="result.validation.compliancePercentage < 95">
+                {{ result.validation.compliancePercentage }}% compliant
+              </span>
+            </div>
+
+            @if (!result.validation.isValid) {
+              <div class="validation-issues">
+                @for (issue of result.validation.issues; track $index) {
+                  <div class="validation-issue">
+                    <code class="issue-field">{{ issue.field }}</code>
+                    <span class="issue-message">{{ issue.message }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <pre class="json-preview">{{ formattedJson }}</pre>
+        </mat-card-content>
+      </mat-card>
+    }
+  </main>
+</div>

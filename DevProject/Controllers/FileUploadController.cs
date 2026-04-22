@@ -1,6 +1,7 @@
-﻿namespace DevProject.Controllers
+namespace DevProject.Controllers
 {
     using Business.Processors.Interfaces;
+    using Business.Storage.Interfaces;
     using Data.Exceptions;
     using Microsoft.AspNetCore.Mvc;
     using Resources.Requests;
@@ -12,73 +13,69 @@
     {
         private readonly ILogger<FileUploadController> logger;
         private readonly ISpreadsheetProcessor spreadsheetProcessor;
-        
-        private readonly string[] allowedExtensions = { ".xlsx", ".xls"};
+        private readonly IFileStorage fileStorage;
+
+        private readonly string[] allowedExtensions = { ".xlsx", ".xls" };
         private readonly long maxFileSize = 10 * 1024 * 1024;
-        
+
         public FileUploadController(
             ILogger<FileUploadController> logger,
-            ISpreadsheetProcessor spreadsheetProcessor)
+            ISpreadsheetProcessor spreadsheetProcessor,
+            IFileStorage fileStorage)
         {
-            this.logger = logger;
+            this.logger             = logger;
             this.spreadsheetProcessor = spreadsheetProcessor;
+            this.fileStorage        = fileStorage;
         }
 
         [HttpPost("UploadFile")]
-        public async Task<IActionResult> UploadFile(FileUploadRequest fileUploadRequest)
+        public async Task<IActionResult> UploadFile(
+            FileUploadRequest fileUploadRequest,
+            CancellationToken ct = default)
         {
             try
             {
                 if (fileUploadRequest.File.Length == 0)
-                {
                     return BadRequest("No File Selected");
-                }
-                
+
                 var fileExtension = Path.GetExtension(fileUploadRequest.File.FileName).ToLower();
-                
+
                 if (!allowedExtensions.Contains(fileExtension))
-                {
                     return BadRequest($"Only {string.Join(",", allowedExtensions)} file extensions are allowed");
-                }
 
                 if (fileUploadRequest.File.Length > maxFileSize)
-                {
-                    return BadRequest($"File size cannot be larger than {maxFileSize} MB");
-                }
-                
-                var uploadsDirectory =  Path.Combine(Directory.GetCurrentDirectory(),"wwwroot", "uploads");
-                Directory.CreateDirectory(uploadsDirectory);
+                    return BadRequest($"File size cannot be larger than {maxFileSize} MB");                using var memoryStream = new MemoryStream();
+                await fileUploadRequest.File.CopyToAsync(memoryStream, ct);
+                memoryStream.Position = 0;
 
-                var fileName = $"{Guid.NewGuid()}{fileExtension}";
-                var filePath = Path.Combine(uploadsDirectory, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await fileUploadRequest.File.CopyToAsync(stream);
-                }
+                var fileId = await fileStorage.SaveAsync(memoryStream, fileExtension, ct);
+                memoryStream.Position = 0;
 
                 try
                 {
-                    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                    var workbook = spreadsheetProcessor.Process(memoryStream, fileUploadRequest.File.FileName);
+
+                    logger.LogInformation(
+                        "Parsed '{FileName}': {TotalSheets} sheet(s).",
+                        fileUploadRequest.File.FileName, workbook.TotalSheets);
+
+                    var response = new FileUploadResponse
                     {
-                        var parse = this.spreadsheetProcessor.Process(stream,  fileUploadRequest.File.FileName);
-                        logger.LogInformation($"Parsed {fileUploadRequest.File.FileName}: {parse.Rows} rows, {parse.ColumnNames.Count} columns from {parse.SpreadsheetName}");
-
-                        var response = new FileUploadResponse()
+                        FileId       = fileId,
+                        WorkbookName = workbook.WorkbookName,
+                        Sheets       = workbook.Sheets.Select(s => new ParsedSheetResponse
                         {
-                            FileId = fileName,
-                            SheetName = parse.SpreadsheetName,
-                            ColumnNames = parse.ColumnNames,
-                            Rows = parse.Rows,
-                            TotalRows = parse.TotalRows,
-                        };
+                            SheetName   = s.SpreadsheetName,
+                            ColumnNames = s.ColumnNames,
+                            TotalRows   = s.TotalRows ?? 0
+                        }).ToList()
+                    };
 
-                        return Ok(response);
-                    }
+                    return Ok(response);
                 }
                 catch (ProcessExcelException ex)
                 {
-                    logger.LogWarning($"Parse failed for {fileUploadRequest.File.FileName}, : {ex.Message}");
+                    logger.LogWarning("Parse failed for {FileName}: {Message}", fileUploadRequest.File.FileName, ex.Message);
                     return UnprocessableEntity(new { message = ex.Message });
                 }
             }

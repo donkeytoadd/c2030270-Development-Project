@@ -1,13 +1,17 @@
-﻿namespace DevProject.Resources.Responses
+namespace DevProject.Resources.Responses
 {
-    using Data.Entities;
-
     public class FileUploadResponse
     {
         public required string FileId { get; set; }
+        public required string WorkbookName { get; set; }
+        public required List<ParsedSheetResponse> Sheets { get; set; }
+        public int TotalSheets => Sheets.Count;
+    }
+
+    public class ParsedSheetResponse
+    {
         public required string SheetName { get; set; }
-        public required List<String> ColumnNames { get; set; }
-        public required List<Dictionary<string, CellValue>> Rows { get; set; }
-        public int? TotalRows { get; set; }
+        public required List<string> ColumnNames { get; set; }
+        public int TotalRows { get; set; }
     }
 }
