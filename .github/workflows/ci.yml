@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  AZURE_WEBAPP_NAME: c2030270-devproject
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20'
+
 jobs:
   backend:
     name: .NET Build & Test
@@ -51,3 +56,46 @@ jobs:
       - name: Build
         working-directory: DevProjectUI
         run: npm run build
+        
+    deploy:
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build Angular
+        working-directory: DevProjectUI
+        run: |
+          npm ci
+          npm run build -- --configuration production
+
+      - name: Verify Angular build output
+        run: |
+          ls -la DevProject/wwwroot/
+          test -f DevProject/wwwroot/index.html
+
+      - name: Publish .NET
+        run: dotnet publish DevProject/DevProject.csproj -c Release -o ./publish
+
+      - name: Verify publish output contains wwwroot
+        run: |
+          ls -la ./publish/wwwroot/
+          test -f ./publish/wwwroot/index.html
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./publish
