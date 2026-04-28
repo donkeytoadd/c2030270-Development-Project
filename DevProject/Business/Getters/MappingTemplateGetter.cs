@@ -9,7 +9,6 @@ namespace DevProject.Business.Getters
             BuildTmf634(),
             BuildTmf633(),
             BuildTmf620(),
-            BuildTmf638(),
             BuildTmf637(),
             BuildTmf639(),
             BuildTmf629(),
@@ -53,23 +52,110 @@ namespace DevProject.Business.Getters
             ApiId                  = "TMF633",
             ApiName                = "Service Catalog Management",
             RootResourceType       = "ServiceSpecification",
-            RootBaseType           = "EntitySpecification",
-            BasePath               = "/serviceCatalogManagement/v4",
+            RootBaseType           = null,
+            BasePath               = "/tmf-api/serviceCatalogManagement/v4",
             ResourceCollectionPath = "serviceSpecification",
+            EmitId                 = false,
+            EmitHref               = false,
+            EmitLastUpdate         = false,
             SheetMappings =
             [
-                OverviewSheet(
-                    extraMappings:
+                new()
+                {
+                    SheetName  = "Service",
+                    Pattern    = SheetMappingPattern.TopLevelFields,
+                    TargetKey  = string.Empty,
+                    IsRequired = true,
+                    ColumnMappings =
                     [
-                        new() { SourceColumn = "Version",         TargetField = "version"         },
-                        new() { SourceColumn = "IsBundle",        TargetField = "isBundle"        },
-                        new() { SourceColumn = "LifecycleStatus", TargetField = "lifecycleStatus" },
-                    ]),
-                CharacteristicSheet(
-                    sheetName:    "serviceSpecCharacteristic",
-                    charArrayKey: "serviceSpecCharacteristic",
-                    valueArrayKey:"serviceSpecCharacteristicValue"),
-                RelatedPartySheet(),
+                        new() { SourceColumn = "name",            TargetField = "name"            },
+                        new() { SourceColumn = "description",     TargetField = "description"     },
+                        new() { SourceColumn = "version",         TargetField = "version"         },
+                        new() { SourceColumn = "isBundle",        TargetField = "isBundle"        },
+                        new() { SourceColumn = "lifecycleStatus", TargetField = "lifecycleStatus" },
+                        new() { SourceColumn = "category",        TargetField = "category"        },
+                    ]
+                },
+                new()
+                {
+                    SheetName  = "RelatedParty",
+                    Pattern    = SheetMappingPattern.FlatArray,
+                    TargetKey  = "relatedParty",
+                    ColumnMappings =
+                    [
+                        new() { SourceColumn = "id",            TargetField = "id"                             },
+                        new() { SourceColumn = "role",          TargetField = "role"                           },
+                        new() { SourceColumn = "@referredType", TargetField = "@referredType"                  },
+                        new() {                                  TargetField = "@referredType",                  DefaultValue = "Organization"                  },
+                        new() { SourceColumn = "id",            TargetField = "partyOrPartyRole.id"            },
+                        new() { SourceColumn = "name",          TargetField = "partyOrPartyRole.name"          },
+                        new() { SourceColumn = "@referredType", TargetField = "partyOrPartyRole.@referredType" },
+                        new() {                                  TargetField = "partyOrPartyRole.@referredType", DefaultValue = "Organization"                  },
+                        new() {                                  TargetField = "partyOrPartyRole.@type",         DefaultValue = "PartyRef"                      },
+                        new() {                                  TargetField = "@type",                          DefaultValue = "RelatedPartyRefOrPartyRoleRef"  },
+                    ]
+                },
+                new()
+                {
+                    SheetName  = "ServiceRelationship",
+                    Pattern    = SheetMappingPattern.FlatArray,
+                    TargetKey  = "serviceSpecRelationship",
+                    ColumnMappings =
+                    [
+                        new() { SourceColumn = "relationshipType", TargetField = "relationshipType" },
+                        new() { SourceColumn = "id",               TargetField = "id"               },
+                        new() { SourceColumn = "href",             TargetField = "href"             },
+                        new() { SourceColumn = "name",             TargetField = "name"             },
+                        new() { SourceColumn = "@referredType",    TargetField = "@referredType"    },
+                    ]
+                },
+                new()
+                {
+                    SheetName  = "SpecCharacteristic",
+                    Pattern    = SheetMappingPattern.FlatArray,
+                    TargetKey  = "specCharacteristic",
+                    ColumnMappings =
+                    [
+                        new() { SourceColumn = "id",                               TargetField = "id"                               },
+                        new() { SourceColumn = "name",                             TargetField = "name"                             },
+                        new() { SourceColumn = "description",                      TargetField = "description"                      },
+                        new() { SourceColumn = "valueType",                        TargetField = "valueType"                        },
+                        new() { SourceColumn = "minCardinality",                   TargetField = "minCardinality"                   },
+                        new() { SourceColumn = "maxCardinality",                   TargetField = "maxCardinality"                   },
+                        new() { SourceColumn = "isUnique",                         TargetField = "isUnique"                         },
+                        new() { SourceColumn = "configurable",                     TargetField = "configurable"                     },
+                        new() { SourceColumn = "characteristicValueSpecification", TargetField = "characteristicValueSpecification", ParseJson = true },
+                        new() { SourceColumn = "charSpecRelationship",             TargetField = "charSpecRelationship",             ParseJson = true },
+                    ]
+                },
+                new()
+                {
+                    SheetName  = "FeatureSpecification",
+                    Pattern    = SheetMappingPattern.FlatArray,
+                    TargetKey  = "featureSpecification",
+                    ColumnMappings =
+                    [
+                        new() { SourceColumn = "id",             TargetField = "id"          },
+                        new() { SourceColumn = "name",           TargetField = "name"        },
+                        new() { SourceColumn = "description",    TargetField = "description" },
+                        new() { SourceColumn = "isEnabled",      TargetField = "isEnabled"   },
+                        new() { SourceColumn = "isBundle",       TargetField = "isBundle"    },
+                        new()
+                        {
+                            SourceColumn = "childFeatureIds",
+                            TargetField  = "featureSpecRelationship",
+                            SplitToArray = new Data.Entities.SplitToArrayConfig
+                            {
+                                Delimiter          = ";",
+                                ItemField          = "featureId",
+                                ConstantFields     = new() { ["relationshipType"] = "includes" },
+                                LookupMatchColumn  = "id",
+                                LookupResultColumn = "name",
+                                LookupTargetField  = "name",
+                            },
+                        },
+                    ]
+                },
             ]
         };
 
@@ -98,101 +184,6 @@ namespace DevProject.Business.Getters
                 RelatedPartySheet(),
             ]
         };
-        private static MappingTemplate BuildTmf638() => new()
-        {
-            ApiId                  = "TMF638",
-            ApiName                = "Service Catalog Management",
-            RootResourceType       = "ServiceSpecification",
-            BasePath               = "/tmf-api/serviceCatalogManagement/v4",
-            ResourceCollectionPath = "serviceSpecification",
-            EmitLastUpdate         = false,
-            SheetMappings =
-            [                new()
-                {
-                    SheetName  = "Service",
-                    Pattern    = SheetMappingPattern.TopLevelFields,
-                    TargetKey  = string.Empty,
-                    ColumnMappings =
-                    [
-                        new() { SourceColumn = "name",            TargetField = "name"            },
-                        new() { SourceColumn = "description",     TargetField = "description"     },
-                        new() { SourceColumn = "version",         TargetField = "version"         },
-                        new() { SourceColumn = "isBundle",        TargetField = "isBundle"        },
-                        new() { SourceColumn = "lifecycleStatus", TargetField = "lifecycleStatus" },
-                    ]
-                },                new()
-                {
-                    SheetName  = "RelatedParty",
-                    Pattern    = SheetMappingPattern.FlatArray,
-                    TargetKey  = "relatedParty",
-                    ColumnMappings =
-                    [
-                        new() { SourceColumn = "id",            TargetField = "id"                  },
-                        new() { SourceColumn = "id",            TargetField = "partyOrPartyRole.id"  },
-                        new() { SourceColumn = "role",          TargetField = "role"                 },
-                        new() { SourceColumn = "name",          TargetField = "name"                 },
-                        new() { SourceColumn = "@referredType", TargetField = "@referredType"        },
-                        new() {                                 TargetField = "@referredType",       DefaultValue = "Organization" },
-                    ]
-                },                new()
-                {
-                    SheetName  = "ServiceRelationship",
-                    Pattern    = SheetMappingPattern.FlatArray,
-                    TargetKey  = "serviceRelationship",
-                    ColumnMappings =
-                    [
-                        new() { SourceColumn = "relationshipType", TargetField = "relationshipType" },
-                        new() { SourceColumn = "id",               TargetField = "service.id"       },
-                        new() { SourceColumn = "href",             TargetField = "service.href"     },
-                        new() { SourceColumn = "name",             TargetField = "service.name"     },
-                        new() { SourceColumn = "@referredType",    TargetField = "@referredType"    },
-                    ]
-                },                new()
-                {
-                    SheetName  = "SpecCharacteristic",
-                    Pattern    = SheetMappingPattern.FlatArray,
-                    TargetKey  = "specCharacteristic",
-                    ColumnMappings =
-                    [
-                        new() { SourceColumn = "id",                               TargetField = "id"                               },
-                        new() { SourceColumn = "name",                             TargetField = "name"                             },
-                        new() { SourceColumn = "description",                      TargetField = "description"                      },
-                        new() { SourceColumn = "valueType",                        TargetField = "valueType"                        },
-                        new() { SourceColumn = "minCardinality",                   TargetField = "minCardinality"                   },
-                        new() { SourceColumn = "maxCardinality",                   TargetField = "maxCardinality"                   },
-                        new() { SourceColumn = "isUnique",                         TargetField = "isUnique"                         },
-                        new() { SourceColumn = "configurable",                     TargetField = "configurable"                     },
-                        new() { SourceColumn = "characteristicValueSpecification", TargetField = "characteristicValueSpecification", ParseJson = true },
-                        new() { SourceColumn = "charSpecRelationship",             TargetField = "charSpecRelationship",             ParseJson = true },
-                    ]
-                },                new()
-                {
-                    SheetName  = "FeatureSpecification",
-                    Pattern    = SheetMappingPattern.FlatArray,
-                    TargetKey  = "featureSpecification",
-                    ColumnMappings =
-                    [
-                        new() { SourceColumn = "id",             TargetField = "id"          },
-                        new() { SourceColumn = "name",           TargetField = "name"        },
-                        new() { SourceColumn = "description",    TargetField = "description" },
-                        new() { SourceColumn = "isEnabled",      TargetField = "isEnabled"   },
-                        new() { SourceColumn = "isBundle",       TargetField = "isBundle"    },
-                        new()
-                        {
-                            SourceColumn = "childFeatureIds",
-                            TargetField  = "featureSpecRelationship",
-                            SplitToArray = new Data.Entities.SplitToArrayConfig
-                            {
-                                Delimiter      = ";",
-                                ItemField      = "featureId",
-                                ConstantFields = new() { ["relationshipType"] = "includes" },
-                            },
-                        },
-                    ]
-                },
-            ]
-        };
-
         private static MappingTemplate BuildTmf637() => new()
         {
             ApiId                  = "TMF637",
@@ -200,13 +191,13 @@ namespace DevProject.Business.Getters
             RootResourceType       = "Product",
             BasePath               = "/productInventoryManagement/v4",
             ResourceCollectionPath = "product",
+            EmitLastUpdate         = false,
             SheetMappings =
             [
                 OverviewSheet(
                     extraMappings:
                     [
-                        new() { SourceColumn = "Status",          TargetField = "status"          },
-                        new() { SourceColumn = "LifecycleStatus", TargetField = "lifecycleStatus" },
+                        new() { SourceColumn = "Status", TargetField = "status" },
                     ]),
                 FlatCharacteristicSheet("productCharacteristic"),
                 RelatedPartySheet(),
@@ -239,18 +230,28 @@ namespace DevProject.Business.Getters
             ApiId                  = "TMF629",
             ApiName                = "Customer Management",
             RootResourceType       = "Customer",
-            BasePath               = "/customerManagement/v4",
+            BasePath               = "/tmf-api/customerManagement/v5",
             ResourceCollectionPath = "customer",
+            EmitLastUpdate         = false,
             SheetMappings =
             [
-                OverviewSheet(
-                    extraMappings:
+                new()
+                {
+                    SheetName  = "Overview",
+                    Pattern    = SheetMappingPattern.TopLevelFields,
+                    TargetKey  = string.Empty,
+                    ColumnMappings =
                     [
-                        new() { SourceColumn = "Status",          TargetField = "status"          },
-                        new() { SourceColumn = "CustomerRank",    TargetField = "customerRank"    },
-                    ]),
-                FlatCharacteristicSheet("characteristic"),
-                RelatedPartySheet(),
+                        new() { SourceColumn = "Name",   TargetField = "name"                       },
+                        new() { SourceColumn = "Status", TargetField = "status", LowercaseValue = true },
+                        new() { SourceColumn = "Name",   TargetField = "engagedParty.id"             },
+                        new() { SourceColumn = "Name",   TargetField = "engagedParty.name"            },
+                        new() {                           TargetField = "engagedParty.@type",          DefaultValue = "PartyRef"      },
+                        new() {                           TargetField = "engagedParty.@referredType",   DefaultValue = "Organization"  },
+                    ]
+                },
+                Tmf629CharacteristicSheet(),
+                V5RelatedPartySheet(),
             ]
         };
 
@@ -283,6 +284,7 @@ namespace DevProject.Business.Getters
             RootResourceType       = "ProductOrder",
             BasePath               = "/productOrderingManagement/v4",
             ResourceCollectionPath = "productOrder",
+            EmitLastUpdate         = false,
             SheetMappings =
             [                new()
                 {
@@ -322,17 +324,25 @@ namespace DevProject.Business.Getters
             ApiId                  = "TMF641",
             ApiName                = "Service Ordering Management",
             RootResourceType       = "ServiceOrder",
-            BasePath               = "/serviceOrderingManagement/v4",
+            BasePath               = "/tmf-api/serviceOrderingManagement/v5",
             ResourceCollectionPath = "serviceOrder",
+            EmitLastUpdate         = false,
             SheetMappings =
             [
-                OverviewSheet(
-                    extraMappings:
+                new()
+                {
+                    SheetName  = "Overview",
+                    Pattern    = SheetMappingPattern.TopLevelFields,
+                    TargetKey  = string.Empty,
+                    ColumnMappings =
                     [
-                        new() { SourceColumn = "Priority",    TargetField = "priority"    },
+                        new() { SourceColumn = "Description",             TargetField = "description"             },
+                        new() { SourceColumn = "Priority",                TargetField = "priority"                },
                         new() { SourceColumn = "RequestedStartDate",      TargetField = "requestedStartDate"      },
                         new() { SourceColumn = "RequestedCompletionDate", TargetField = "requestedCompletionDate" },
-                    ]),
+                        new() {                                            TargetField = "state",                   DefaultValue = "acknowledged" },
+                    ]
+                },
                 new SheetMapping
                 {
                     SheetName  = "serviceOrderItem",
@@ -340,16 +350,20 @@ namespace DevProject.Business.Getters
                     TargetKey  = "serviceOrderItem",
                     ColumnMappings =
                     [
-                        new() { SourceColumn = "Id",          TargetField = "id"          },
-                        new() { SourceColumn = "Action",      TargetField = "action"      },
-                        new() { SourceColumn = "Quantity",    TargetField = "quantity"    },
-                        new() { SourceColumn = "ServiceName", TargetField = "service.name" },
-                        new() { SourceColumn = "ServiceId",   TargetField = "service.id"  },
+                        new() { SourceColumn = "Id",          TargetField = "id"                    },
+                        new() { SourceColumn = "Action",      TargetField = "action"                },
+                        new() { SourceColumn = "ServiceName", TargetField = "service.name"          },
+                        new() { SourceColumn = "ServiceId",   TargetField = "service.id"            },
+                        new() {                                TargetField = "service.@type",         DefaultValue = "ServiceRef" },
+                        new() {                                TargetField = "service.@referredType", DefaultValue = "Service"    },
+                        new() {                                TargetField = "@type",                 DefaultValue = "ServiceOrderItem" },
                     ]
                 },
                 RelatedPartySheet(),
             ]
-        };        private static SheetMapping OverviewSheet(IEnumerable<ColumnMapping> extraMappings) =>
+        };
+
+        private static SheetMapping OverviewSheet(IEnumerable<ColumnMapping> extraMappings) =>
             new()
             {
                 SheetName  = "Overview",
@@ -365,6 +379,7 @@ namespace DevProject.Business.Getters
             new() { SourceColumn = "Name",        TargetField = "name"        },
             new() { SourceColumn = "Description",  TargetField = "description" },
         ];
+
         private static SheetMapping CharacteristicSheet(
             string sheetName,
             string charArrayKey,
@@ -395,6 +410,7 @@ namespace DevProject.Business.Getters
                     }
                 ]
             };
+
         private static SheetMapping FlatCharacteristicSheet(string charArrayKey) =>
             new()
             {
@@ -403,10 +419,43 @@ namespace DevProject.Business.Getters
                 TargetKey  = charArrayKey,
                 ColumnMappings =
                 [
-                    new() { SourceColumn = "Name",          TargetField = "name"          },
-                    new() { SourceColumn = "Value",         TargetField = "value"         },
-                    new() { SourceColumn = "ValueType",     TargetField = "valueType"     },
-                    new() { SourceColumn = "UnitOfMeasure", TargetField = "unitOfMeasure" },
+                    new() { SourceColumn = "Name",      TargetField = "name"      },
+                    new() { SourceColumn = "Value",     TargetField = "value"     },
+                    new() { SourceColumn = "ValueType", TargetField = "valueType" },
+                ]
+            };
+
+        private static SheetMapping Tmf629CharacteristicSheet() =>
+            new()
+            {
+                SheetName  = "characteristic",
+                Pattern    = SheetMappingPattern.FlatArray,
+                TargetKey  = "characteristic",
+                DropWarnings = new()
+                {
+                    ["UnitOfMeasure"] = "Column 'UnitOfMeasure' on sheet 'characteristic' has no target field in the TMF629 schema and was not included in the output.",
+                },
+                ColumnMappings =
+                [
+                    new() { SourceColumn = "Name",      TargetField = "id"        },
+                    new() { SourceColumn = "Name",      TargetField = "name"      },
+                    new() { SourceColumn = "Value",     TargetField = "value"     },
+                    new() { SourceColumn = "ValueType", TargetField = "valueType" },
+                    new()
+                    {
+                        SourceColumn = "ValueType",
+                        TargetField  = "@type",
+                        ValueMap     = new()
+                        {
+                            ["string"]  = "StringCharacteristic",
+                            ["int"]     = "IntegerCharacteristic",
+                            ["integer"] = "IntegerCharacteristic",
+                            ["decimal"] = "NumberCharacteristic",
+                            ["number"]  = "NumberCharacteristic",
+                            ["date"]    = "StringCharacteristic",
+                            ["boolean"] = "BooleanCharacteristic",
+                        }
+                    },
                 ]
             };
 
@@ -422,6 +471,28 @@ namespace DevProject.Business.Getters
                     new() { SourceColumn = "Role",         TargetField = "role"          },
                     new() { SourceColumn = "Name",         TargetField = "name"          },
                     new() { SourceColumn = "ReferredType", TargetField = "@referredType" },
+                    new() {                                TargetField = "@type",         DefaultValue = "RelatedParty" },
+                ]
+            };
+
+        private static SheetMapping V5RelatedPartySheet() =>
+            new()
+            {
+                SheetName  = "relatedParty",
+                Pattern    = SheetMappingPattern.FlatArray,
+                TargetKey  = "relatedParty",
+                ColumnMappings =
+                [
+                    new() { SourceColumn = "Id",           TargetField = "id"                             },
+                    new() { SourceColumn = "Role",         TargetField = "role"                           },
+                    new() { SourceColumn = "ReferredType", TargetField = "@referredType"                  },
+                    new() {                                 TargetField = "@referredType",                  DefaultValue = "Organization"                 },
+                    new() { SourceColumn = "Id",           TargetField = "partyOrPartyRole.id"            },
+                    new() { SourceColumn = "Name",         TargetField = "partyOrPartyRole.name"          },
+                    new() { SourceColumn = "ReferredType", TargetField = "partyOrPartyRole.@referredType" },
+                    new() {                                 TargetField = "partyOrPartyRole.@referredType", DefaultValue = "Organization"                 },
+                    new() {                                 TargetField = "partyOrPartyRole.@type",         DefaultValue = "PartyRef"                     },
+                    new() {                                 TargetField = "@type",                          DefaultValue = "RelatedPartyRefOrPartyRoleRef" },
                 ]
             };
     }

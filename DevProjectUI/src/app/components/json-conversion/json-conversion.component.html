@@ -19,7 +19,6 @@
         <mat-card-content>
           <div class="config-body">
 
-            <!-- API / template selector -->
             <div class="config-field">
               <label class="config-label">TM Forum Open API</label>
               <p class="config-hint">
@@ -28,12 +27,23 @@
               </p>
               <mat-form-field appearance="outline" class="config-input">
                 <mat-label>API</mat-label>
-                <mat-select [(ngModel)]="selectedApiId" name="selectedApiId">
-                  @for (tmpl of mappingTemplates(); track tmpl.apiId) {
-                    <mat-option [value]="tmpl.apiId">{{ tmpl.apiId }} – {{ tmpl.apiName }}</mat-option>
+                <mat-select
+                  [ngModel]="selectedApiId()"
+                  (ngModelChange)="onApiSelected($event)"
+                  name="selectedApiId">
+                  @for (opt of dropdownOptions(); track opt.apiId) {
+                    <mat-option [value]="opt.apiId">{{ opt.label }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
+
+              @if (!selectionConfirmed()) {
+                <p class="selection-required-hint">
+                  <mat-icon class="hint-icon">info</mat-icon>
+                  Choose an API to enable conversion.
+                </p>
+              }
+
               @if (selectedTemplate) {
                 <p class="config-api-detail">
                   Resource type: <strong>{{ selectedTemplate.rootResourceType }}</strong>
@@ -43,22 +53,35 @@
                   &nbsp;·&nbsp; Path: <code>{{ selectedTemplate.basePath }}/{{ selectedTemplate.resourceCollectionPath }}</code>
                 </p>
               }
+              @if (detectionHint) {
+                <p class="detection-hint">
+                  <mat-icon class="detection-icon">auto_awesome</mat-icon>
+                  Auto-detected as <strong>{{ detectionHint.apiId }}</strong> with
+                  <strong>{{ detectionHint.confidence }}%</strong> confidence
+                </p>
+              }
             </div>
 
-            <!-- Sheet coverage checklist -->
             @if (sheetCoverage.length) {
               <div class="config-field">
                 <label class="config-label">Expected worksheets</label>
                 <p class="config-hint">
                   The mapping template for this API expects the worksheet names below.
-                  Sheets marked <span class="badge-missing">missing</span> will be skipped — add them to your workbook to include that data.
+                  Sheets marked <span class="badge-missing">missing</span> will be skipped.
+                  <strong>Required</strong> sheets must be present to proceed with conversion.
                 </p>
                 <div class="sheet-coverage">
                   @for (entry of sheetCoverage; track entry.sheetName) {
-                    <div class="sheet-coverage-row" [class.sheet-present]="entry.present" [class.sheet-missing]="!entry.present">
-                      <mat-icon class="sheet-icon">{{ entry.present ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                    <div class="sheet-coverage-row"
+                         [class.sheet-present]="entry.present"
+                         [class.sheet-missing]="!entry.present && !entry.isRequired"
+                         [class.sheet-missing-required]="!entry.present && entry.isRequired">
+                      <mat-icon class="sheet-icon">{{ entry.present ? 'check_circle' : (entry.isRequired ? 'error' : 'radio_button_unchecked') }}</mat-icon>
                       <span class="sheet-name">{{ entry.sheetName }}</span>
                       <span class="sheet-pattern">{{ entry.pattern }}</span>
+                      @if (entry.isRequired) {
+                        <span class="badge-required">required</span>
+                      }
                       @if (!entry.present) {
                         <span class="badge-missing">missing</span>
                       }
@@ -74,7 +97,11 @@
 
             <div class="config-actions">
               <button mat-stroked-button (click)="startOver()">Back</button>
-              <button mat-flat-button color="primary" (click)="convert()" [disabled]="!selectedApiId">
+              <button mat-flat-button color="primary"
+                      (click)="convert()"
+                      [disabled]="!canConvert"
+                      [matTooltip]="convertDisabledReason"
+                      [matTooltipDisabled]="canConvert">
                 <mat-icon>bolt</mat-icon>Convert
               </button>
             </div>
@@ -142,15 +169,29 @@
               </span>
             </div>
 
-            @if (!result.validation.isValid) {
+            @if (result.validation.issues?.length) {
               <div class="validation-issues">
                 @for (issue of result.validation.issues; track $index) {
-                  <div class="validation-issue">
-                    <code class="issue-field">{{ issue.field }}</code>
-                    <span class="issue-message">{{ issue.message }}</span>
-                  </div>
+                  @if (issue.severity === 'SchemaArtefact') {
+                    <div class="validation-issue validation-issue-artefact">
+                      <code class="issue-field issue-field-artefact">{{ issue.field }}</code>
+                      <span class="issue-message issue-message-artefact">Schema composition artefact — property is valid per API documentation but forbidden by a sub-schema branch.</span>
+                    </div>
+                  } @else {
+                    <div class="validation-issue">
+                      <code class="issue-field">{{ issue.field }}</code>
+                      <span class="issue-message">{{ issue.message }}</span>
+                    </div>
+                  }
                 }
               </div>
+            }
+
+            @if (result.validation.artefactCount > 0 && result.validation.isValid) {
+              <p class="artefact-note">
+                <mat-icon class="artefact-note-icon">info</mat-icon>
+                {{ result.validation.artefactCount }} schema composition artefact{{ result.validation.artefactCount === 1 ? '' : 's' }} detected and excluded from compliance score.
+              </p>
             }
           </div>
 

@@ -27,18 +27,20 @@ export interface JsonConversionRequest {
   config?: JsonConversionConfig;
 }
 
+export type ValidationSeverity = 'Error' | 'Warning' | 'SchemaArtefact';
+
 export interface ValidationIssue {
   resourceIndex: number;
   resourceName: string;
   field: string;
   message: string;
-  severity: string;
+  severity: ValidationSeverity;
 }
 
 export interface ValidationReport {
   isValid: boolean;
   totalIssues: number;
-  /** Percentage of fields without schema errors. 100 = fully compliant. */
+  artefactCount: number;
   compliancePercentage: number;
   issues: ValidationIssue[];
 }
@@ -57,11 +59,18 @@ export interface JsonConversionResponse {
   warnings: string[];
 }
 
-export interface ApiDetectionResult {
-  detectedApiId: string | null;
+export interface ApiDetectionCandidate {
+  apiId: string;
+  apiName: string;
+  confidence: number;
+  matchedSignals: string[];
+  missingSignals: string[];
 }
 
-// ── Workbook (multi-sheet) conversion models ─────────────────────────────────
+export interface ApiDetectionResult {
+  candidates: ApiDetectionCandidate[];
+  autoSelectedApiId: string | null;
+}
 
 export interface ColumnMapping {
   sourceColumn: string;
@@ -79,6 +88,7 @@ export interface SheetMapping {
   sheetName: string;
   pattern: SheetMappingPattern;
   targetKey: string;
+  isRequired: boolean;
   columnMappings: ColumnMapping[];
   groupByColumn?: string;
   subArrayDefinitions: SubArrayDefinition[];
@@ -105,7 +115,6 @@ export interface WorkbookConversionRequest {
 
 export interface WorkbookConversionResponse {
   fileId: string;
-  /** GUID for the download endpoint: GET /api/JsonConversion/Download/{resultId} */
   resultId: string;
   workbookName: string;
   apiId: string;

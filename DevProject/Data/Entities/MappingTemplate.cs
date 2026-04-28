@@ -14,6 +14,10 @@ namespace DevProject.Data.Entities
 
         public required string ResourceCollectionPath { get; init; }
 
-        public required List<SheetMapping> SheetMappings { get; init; }        public bool EmitLastUpdate { get; init; } = true;
+        public required List<SheetMapping> SheetMappings { get; init; }
+
+        public bool EmitId { get; init; } = true;
+        public bool EmitHref { get; init; } = true;
+        public bool EmitLastUpdate { get; init; } = true;
     }
 }

@@ -136,10 +136,10 @@ namespace DevProject.Controllers
 
             try
             {
-                await using var stream   = await fileStorage.OpenReadAsync(fileId, ct);
-                var workbook             = spreadsheetProcessor.Process(stream, fileId);
-                var detectedApiId        = tmForumApiDetectorGetter.DetectApiId(workbook.Sheets.First());
-                return Ok(new { detectedApiId });
+                await using var stream = await fileStorage.OpenReadAsync(fileId, ct);
+                var workbook           = spreadsheetProcessor.Process(stream, fileId);
+                var detection          = tmForumApiDetectorGetter.DetectApi(workbook);
+                return Ok(detection);
             }
             catch (Exception ex)
             {

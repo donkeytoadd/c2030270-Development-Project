@@ -3,6 +3,9 @@ namespace DevProject.Business.Getters.Interfaces
     using Data.Entities;
 
     public interface ITmForumApiDetectorGetter
-    {        string? DetectApiId(ParsedExcelData data);
+    {
+        ApiDetectionResult DetectApi(ParsedWorkbook workbook);
+
+        string? DetectApiId(ParsedExcelData data);
     }
 }

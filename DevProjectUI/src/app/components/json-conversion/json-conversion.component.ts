@@ -8,8 +8,9 @@ import { MatProgressBar } from '@angular/material/progress-bar';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/core';
+import { MatTooltip } from '@angular/material/tooltip';
 import { JsonConversionService } from '../../services/json-conversion.service';
-import { MappingTemplate, WorkbookConversionResponse } from '../../models/json-conversion.model';
+import { ApiDetectionCandidate, MappingTemplate, WorkbookConversionResponse } from '../../models/json-conversion.model';
 import { ParsedWorkbook, ParsedSheetSummary } from '../../models/parsed-sheet.model';
 
 type ConversionStatus = 'idle' | 'converting' | 'converted' | 'error';
@@ -28,41 +29,80 @@ type ConversionStatus = 'idle' | 'converting' | 'converted' | 'error';
     MatFormField,
     MatLabel,
     MatSelect,
-    MatOption
+    MatOption,
+    MatTooltip
   ]
 })
 export class JsonConversionComponent implements OnInit {
   fileId = '';
   workbookName = '';
-
-  /** All sheet names present in the uploaded workbook (from the upload step). */
   presentSheetNames: string[] = [];
 
   mappingTemplates = signal<MappingTemplate[]>([]);
-  selectedApiId = 'TMF634';
+  detectionCandidates = signal<ApiDetectionCandidate[]>([]);
+
+  selectionConfirmed = signal(false);
+  selectedApiId = signal('');
 
   status = signal<ConversionStatus>('idle');
   errorMessage = signal('');
   conversionResult = signal<WorkbookConversionResponse | null>(null);
 
+  readonly dropdownOptions = computed<{ apiId: string; apiName: string; label: string }[]>(() => {
+    const candidates = this.detectionCandidates();
+    if (candidates.length > 0) {
+      return candidates.map(c => ({
+        apiId:   c.apiId,
+        apiName: c.apiName,
+        label:   `${c.apiId} – ${c.apiName} (${c.confidence}%)`
+      }));
+    }
+    return this.mappingTemplates().map(t => ({
+      apiId:   t.apiId,
+      apiName: t.apiName,
+      label:   `${t.apiId} – ${t.apiName}`
+    }));
+  });
+
   get selectedTemplate(): MappingTemplate | undefined {
-    return this.mappingTemplates().find(t => t.apiId === this.selectedApiId);
+    return this.mappingTemplates().find(t => t.apiId === this.selectedApiId());
   }
 
-  /**
-   * For each sheet the selected template expects, returns whether the
-   * uploaded workbook actually contains it — so the user can see any gaps
-   * before they hit Convert.
-   */
-  get sheetCoverage(): { sheetName: string; present: boolean; pattern: string }[] {
+  get sheetCoverage(): { sheetName: string; present: boolean; pattern: string; isRequired: boolean }[] {
     const tmpl = this.selectedTemplate;
     if (!tmpl) return [];
     const lower = new Set(this.presentSheetNames.map(n => n.toLowerCase()));
     return tmpl.sheetMappings.map(m => ({
-      sheetName: m.sheetName,
-      present:   lower.has(m.sheetName.toLowerCase()),
-      pattern:   patternLabel(m.pattern)
+      sheetName:  m.sheetName,
+      present:    lower.has(m.sheetName.toLowerCase()),
+      pattern:    patternLabel(m.pattern),
+      isRequired: m.isRequired ?? false,
     }));
+  }
+
+  get hasMissingRequiredSheets(): boolean {
+    return this.sheetCoverage.some(s => s.isRequired && !s.present);
+  }
+
+  get canConvert(): boolean {
+    return this.selectionConfirmed() && !this.hasMissingRequiredSheets;
+  }
+
+  get convertDisabledReason(): string {
+    if (!this.selectionConfirmed()) return 'Select a TM Forum API before converting.';
+    if (this.hasMissingRequiredSheets) {
+      const missing = this.sheetCoverage
+        .filter(s => s.isRequired && !s.present)
+        .map(s => s.sheetName)
+        .join(', ');
+      return `Required sheet(s) missing: ${missing}`;
+    }
+    return '';
+  }
+
+  get detectionHint(): ApiDetectionCandidate | null {
+    const top = this.detectionCandidates()[0];
+    return top?.confidence > 0 ? top : null;
   }
 
   get formattedJson(): string {
@@ -83,28 +123,40 @@ export class JsonConversionComponent implements OnInit {
       return;
     }
 
-    this.fileId           = state.fileId;
-    this.workbookName     = state.workbookName ?? '';
+    this.fileId            = state.fileId;
+    this.workbookName      = state.workbookName ?? '';
     this.presentSheetNames = (state.sheets ?? []).map((s: ParsedSheetSummary) => s.sheetName);
 
     this.jsonConversionService.getMappingTemplates().subscribe({
-      next: (templates) => {
-        this.mappingTemplates.set(templates);
-        // Pre-select the first template whose expected sheets best match the workbook.
-        const detected = this.detectBestTemplate(templates);
-        if (detected) this.selectedApiId = detected;
+      next: (templates) => this.mappingTemplates.set(templates),
+      error: () => {}
+    });
+
+    this.jsonConversionService.detectApi(this.fileId).subscribe({
+      next: (result) => {
+        this.detectionCandidates.set(result.candidates);
+        if (result.autoSelectedApiId) {
+          this.selectedApiId.set(result.autoSelectedApiId);
+          this.selectionConfirmed.set(true);
+        }
       },
       error: () => {}
     });
   }
 
+  onApiSelected(apiId: string): void {
+    this.selectedApiId.set(apiId);
+    this.selectionConfirmed.set(true);
+  }
+
   convert(): void {
+    if (!this.canConvert) return;
     this.status.set('converting');
     this.conversionResult.set(null);
 
     this.jsonConversionService.convertWorkbook({
       fileId: this.fileId,
-      apiId:  this.selectedApiId
+      apiId:  this.selectedApiId()
     }).subscribe({
       next: (result) => {
         this.conversionResult.set(result);
@@ -126,20 +178,6 @@ export class JsonConversionComponent implements OnInit {
 
   startOver(): void {
     this.router.navigate(['/upload-file']);
-  }
-
-  private detectBestTemplate(templates: MappingTemplate[]): string | null {
-    if (!templates.length || !this.presentSheetNames.length) return null;
-    const lower = new Set(this.presentSheetNames.map(n => n.toLowerCase()));
-
-    let best: { apiId: string; matches: number } | null = null;
-    for (const tmpl of templates) {
-      const matches = tmpl.sheetMappings.filter(m =>
-        lower.has(m.sheetName.toLowerCase())
-      ).length;
-      if (!best || matches > best.matches) best = { apiId: tmpl.apiId, matches };
-    }
-    return best && best.matches > 0 ? best.apiId : null;
   }
 
   private triggerDownload(content: string, filename: string, mimeType: string): void {

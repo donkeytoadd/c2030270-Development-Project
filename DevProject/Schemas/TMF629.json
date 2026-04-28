@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TMF629 Customer",
+  "description": "TM Forum TMF629 Customer Management API – Customer",
+  "type": "object",
+  "required": ["name"],
+  "additionalProperties": false,
+  "properties": {
+    "id":              { "type": "string" },
+    "href":            { "type": "string" },
+    "name":            { "type": "string", "minLength": 1 },
+    "status":          { "type": "string" },
+    "statusReason":    { "type": "string" },
+    "@type":           { "type": "string" },
+    "@baseType":       { "type": "string" },
+    "@schemaLocation": { "type": "string" },
+    "account":         { "type": "array" },
+    "agreement":       { "type": "array" },
+    "characteristic":  { "type": "array" },
+    "contactMedium":   { "type": "array" },
+    "creditProfile":   { "type": "array" },
+    "engagedParty":    { "type": "object" },
+    "paymentMethod":   { "type": "array" },
+    "relatedParty":    { "type": "array" },
+    "validFor": {
+      "type": "object",
+      "properties": {
+        "startDateTime": { "type": "string", "format": "date-time" },
+        "endDateTime":   { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

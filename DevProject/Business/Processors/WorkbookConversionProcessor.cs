@@ -9,14 +9,17 @@ namespace DevProject.Business.Processors
     {
         public WorkbookConversionResult Convert(ParsedWorkbook workbook, MappingTemplate template)
         {
-            var id = Guid.NewGuid().ToString();
-
             var root = new JsonObject
             {
-                ["id"]    = id,
-                ["href"]  = $"{template.BasePath}/{template.ResourceCollectionPath}/{id}",
                 ["@type"] = template.RootResourceType,
             };
+
+            if (template.EmitId || template.EmitHref)
+            {
+                var id = Guid.NewGuid().ToString();
+                if (template.EmitId)   root["id"]   = id;
+                if (template.EmitHref) root["href"]  = $"{template.BasePath}/{template.ResourceCollectionPath}/{id}";
+            }
 
             if (template.EmitLastUpdate)
                 root["lastUpdate"] = DateTime.UtcNow.ToString("o");
@@ -35,6 +38,12 @@ namespace DevProject.Business.Processors
                 {
                     warnings.Add($"Sheet '{sheetMapping.SheetName}' not found in workbook — mapping skipped.");
                     continue;
+                }
+
+                foreach (var (col, message) in sheetMapping.DropWarnings)
+                {
+                    if (sheet.Rows.Any(r => r.TryGetValue(col, out var c) && !c.IsEmpty))
+                        warnings.Add(message);
                 }
 
                 switch (sheetMapping.Pattern)
@@ -80,9 +89,16 @@ namespace DevProject.Business.Processors
 
             foreach (var mapping in sheetMapping.ColumnMappings)
             {
+                if (string.IsNullOrEmpty(mapping.SourceColumn))
+                {
+                    if (mapping.DefaultValue is not null && !ContainsNestedProperty(root, mapping.TargetField))
+                        SetNestedProperty(root, mapping.TargetField, JsonValue.Create(mapping.DefaultValue));
+                    continue;
+                }
+
                 if (!firstRow.TryGetValue(mapping.SourceColumn, out var cell)) continue;
                 if (cell.IsEmpty) continue;
-                var value = ResolveValue(cell, mapping.ParseJson);
+                var value = ApplyMappingTransforms(ResolveValue(cell, mapping.ParseJson), mapping);
                 if (value is null) continue;
                 SetNestedProperty(root, mapping.TargetField, value);
             }
@@ -90,13 +106,14 @@ namespace DevProject.Business.Processors
 
         private static JsonArray BuildFlatArray(ParsedExcelData sheet, SheetMapping sheetMapping)
         {
-            var array = new JsonArray();
+            var array   = new JsonArray();
+            var allRows = sheet.Rows;
 
             foreach (var row in sheet.Rows)
             {
                 if (row.Values.All(c => c.IsEmpty)) continue;
 
-                var obj = BuildObjectFromMappings(row, sheetMapping.ColumnMappings);
+                var obj = BuildObjectFromMappings(row, sheetMapping.ColumnMappings, allRows);
                 if (obj.Count > 0)
                     array.Add(obj);
             }
@@ -151,7 +168,7 @@ namespace DevProject.Business.Processors
                     if (!row.TryGetValue(mapping.SourceColumn, out var cell)) continue;
                     if (cell.IsEmpty) continue;                    if (!ContainsNestedProperty(parent, mapping.TargetField))
                     {
-                        var value = ResolveValue(cell, mapping.ParseJson);
+                        var value = ApplyMappingTransforms(ResolveValue(cell, mapping.ParseJson), mapping);
                         if (value is not null)
                             SetNestedProperty(parent, mapping.TargetField, value);
                     }
@@ -168,7 +185,7 @@ namespace DevProject.Business.Processors
                         if (!colSet.Contains(mapping.SourceColumn)) continue;
                         if (!row.TryGetValue(mapping.SourceColumn, out var cell)) continue;
                         if (cell.IsEmpty) continue;
-                        var value = ResolveValue(cell, mapping.ParseJson);
+                        var value = ApplyMappingTransforms(ResolveValue(cell, mapping.ParseJson), mapping);
                         if (value is null) continue;
                         SetNestedProperty(entry, mapping.TargetField, value);
                     }
@@ -245,11 +262,13 @@ namespace DevProject.Business.Processors
 
         private static JsonObject BuildObjectFromMappings(
             Dictionary<string, CellValue> row,
-            List<ColumnMapping> mappings)
+            List<ColumnMapping> mappings,
+            IReadOnlyList<Dictionary<string, CellValue>>? allRows = null)
         {
             var obj = new JsonObject();
             foreach (var mapping in mappings)
-            {                if (string.IsNullOrEmpty(mapping.SourceColumn))
+            {
+                if (string.IsNullOrEmpty(mapping.SourceColumn))
                 {
                     if (mapping.DefaultValue is not null && !ContainsNestedProperty(obj, mapping.TargetField))
                         SetNestedProperty(obj, mapping.TargetField, JsonValue.Create(mapping.DefaultValue));
@@ -265,21 +284,53 @@ namespace DevProject.Business.Processors
                     var arr = new JsonArray();
                     foreach (var part in parts)
                     {
-                        var item = new JsonObject { [split.ItemField] = JsonValue.Create(part.Trim()) };
+                        var trimmed = part.Trim();
+                        var item = new JsonObject { [split.ItemField] = JsonValue.Create(trimmed) };
                         foreach (var (k, v) in split.ConstantFields)
                             item[k] = JsonValue.Create(v);
+
+                        if (split.LookupMatchColumn is not null
+                            && split.LookupResultColumn is not null
+                            && split.LookupTargetField is not null
+                            && allRows is not null)
+                        {
+                            var matchRow = allRows.FirstOrDefault(r =>
+                                r.TryGetValue(split.LookupMatchColumn, out var mc) &&
+                                !mc.IsEmpty && mc.AsString() == trimmed);
+
+                            if (matchRow is not null
+                                && matchRow.TryGetValue(split.LookupResultColumn, out var rc)
+                                && !rc.IsEmpty)
+                                item[split.LookupTargetField] = JsonValue.Create(rc.AsString());
+                        }
+
                         arr.Add(item);
                     }
                     SetNestedProperty(obj, mapping.TargetField, arr);
                     continue;
                 }
 
-                var value = ResolveValue(cell, mapping.ParseJson);
+                var value = ApplyMappingTransforms(ResolveValue(cell, mapping.ParseJson), mapping);
                 if (value is null) continue;
                 SetNestedProperty(obj, mapping.TargetField, value);
             }
             return obj;
         }
+        private static JsonNode? ApplyMappingTransforms(JsonNode? value, ColumnMapping mapping)
+        {
+            if (value is null) return null;
+            if (!mapping.LowercaseValue && mapping.ValueMap is null) return value;
+            if (value is not JsonValue jv || !jv.TryGetValue<string>(out var str)) return value;
+
+            if (mapping.LowercaseValue)
+                str = str.ToLowerInvariant();
+
+            if (mapping.ValueMap is not null && mapping.ValueMap.TryGetValue(str, out var mapped))
+                str = mapped;
+
+            return JsonValue.Create(str);
+        }
+
         private static JsonNode? ResolveValue(CellValue cell, bool parseJson) =>
             parseJson
                 ? CellValueJsonHelper.TryParseJson(cell)

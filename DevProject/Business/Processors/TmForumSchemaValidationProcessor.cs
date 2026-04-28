@@ -5,6 +5,7 @@ namespace DevProject.Business.Processors
     using System.Text.Json;
     using System.Text.Json.Nodes;
     using Data.Entities;
+    using Data.Enums;
     using DevProject.Business.Getters.Interfaces;
     using Interfaces;
     using Json.Schema;
@@ -55,27 +56,41 @@ namespace DevProject.Business.Processors
                                 ResourceName  = resourceName,
                                 Field         = detail.InstanceLocation.ToString(),
                                 Message       = message,
-                                Severity      = "Error"
+                                Severity      = IsFalseSchemaMessage(message)
+                                    ? ValidationSeverity.SchemaArtefact
+                                    : ValidationSeverity.Error,
                             });
                         }
                     }
                 }
             }
 
-            var distinctErrorPaths = issues.Select(i => i.Field).Distinct(StringComparer.Ordinal).Count();
+            var errorIssues        = issues.Where(i => i.Severity == ValidationSeverity.Error).ToList();
+            var distinctErrorPaths = errorIssues.Select(i => i.Field).Distinct(StringComparer.Ordinal).Count();
             var totalPaths         = resources.Sum(r => CountJsonLeafPaths(r));
-            var compliance         = totalPaths == 0
+            var artefactPaths      = issues
+                .Where(i => i.Severity == ValidationSeverity.SchemaArtefact)
+                .Select(i => i.Field)
+                .Distinct(StringComparer.Ordinal)
+                .Count();
+            var effectivePaths = totalPaths - artefactPaths;
+            var compliance     = effectivePaths <= 0
                 ? 100.0
-                : Math.Round(Math.Max(0, (totalPaths - distinctErrorPaths) / (double)totalPaths * 100), 1);
+                : Math.Round(Math.Max(0, (effectivePaths - distinctErrorPaths) / (double)effectivePaths * 100), 1);
 
             return new ValidationReport
             {
-                IsValid              = issues.Count == 0,
-                TotalIssues          = issues.Count,
+                IsValid              = errorIssues.Count == 0,
+                TotalIssues          = errorIssues.Count,
+                ArtefactCount        = issues.Count(i => i.Severity == ValidationSeverity.SchemaArtefact),
                 CompliancePercentage = compliance,
                 Issues               = issues
             };
-        }        private static int CountJsonLeafPaths(JsonNode? node)
+        }        private static bool IsFalseSchemaMessage(string message) =>
+            message.Contains("All values fail against the false schema",
+                StringComparison.OrdinalIgnoreCase);
+
+        private static int CountJsonLeafPaths(JsonNode? node)
         {
             return node switch
             {
