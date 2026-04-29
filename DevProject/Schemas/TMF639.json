@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TMF639 Resource",
+  "description": "TM Forum TMF639 Resource Inventory Management API – Resource",
+  "type": "object",
+  "required": ["name"],
+  "additionalProperties": false,
+  "properties": {
+    "id":              { "type": "string" },
+    "href":            { "type": "string" },
+    "name":            { "type": "string", "minLength": 1 },
+    "description":     { "type": "string" },
+    "category":        { "type": "string" },
+    "endOperatingDate":{ "type": "string", "format": "date-time" },
+    "resourceVersion": { "type": "string" },
+    "startOperatingDate":{ "type": "string", "format": "date-time" },
+    "usageState":      { "type": "string" },
+    "administrativeState":{ "type": "string" },
+    "operationalState":{ "type": "string" },
+    "resourceStatus": { "type": "string" },
+    "serial":          { "type": "string" },
+    "@type":           { "type": "string" },
+    "@baseType":       { "type": "string" },
+    "@schemaLocation": { "type": "string" },
+    "resourceCharacteristic": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name":           { "type": "string", "minLength": 1 },
+          "value":          {},
+          "valueType":      { "type": "string" },
+          "@type":          { "type": "string" },
+          "@baseType":      { "type": "string" },
+          "@schemaLocation":{ "type": "string" }
+        }
+      }
+    },
+    "activationFeature":    { "type": "array" },
+    "attachment":           { "type": "array" },
+    "note":                 { "type": "array" },
+    "place":                { "type": "array" },
+    "relatedParty":         { "type": "array" },
+    "resourceRelationship": { "type": "array" },
+    "resourceSpecification":{ "type": "object" }
+  }
+}

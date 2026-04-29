@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TMF651 Agreement",
+  "description": "TM Forum TMF651 Agreement Management API – Agreement",
+  "type": "object",
+  "required": ["name"],
+  "additionalProperties": false,
+  "properties": {
+    "id":                  { "type": "string" },
+    "href":                { "type": "string" },
+    "agreementPeriod":     { "type": "object" },
+    "completionDate":      { "type": "string", "format": "date-time" },
+    "description":         { "type": "string" },
+    "documentNumber":      { "type": "integer" },
+    "initialDate":         { "type": "string", "format": "date-time" },
+    "name":                { "type": "string", "minLength": 1 },
+    "statementOfIntent":   { "type": "string" },
+    "status":              { "type": "string" },
+    "type":                { "type": "string" },
+    "version":             { "type": "string" },
+    "@type":               { "type": "string" },
+    "@baseType":           { "type": "string" },
+    "@schemaLocation":     { "type": "string" },
+    "agreementAuthorization": { "type": "array" },
+    "agreementItem":       { "type": "array" },
+    "agreementSpecification":{ "type": "object" },
+    "associatedAgreement": { "type": "array" },
+    "characteristic":      { "type": "array" },
+    "engagedParty":        { "type": "array" },
+    "relatedParty":        { "type": "array" }
+  }
+}
