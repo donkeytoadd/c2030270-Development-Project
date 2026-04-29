@@ -36,7 +36,7 @@
 
                 if (sheet is null)
                 {
-                    warnings.Add($"Sheet '{sheetMapping.SheetName}' not found in workbook â€” mapping skipped.");
+                    warnings.Add($”Sheet '{sheetMapping.SheetName}' not found in workbook - mapping skipped.”);
                     continue;
                 }
 
