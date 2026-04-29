@@ -1,4 +1,4 @@
-using Azure.Storage.Blobs;
+﻿using Azure.Storage.Blobs;
 using DevProject.Business.Storage;
 using DevProject.Business.Storage.Interfaces;
 using DevProject.Infrastructure;
@@ -46,7 +46,7 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddHealthChecks()
         .AddCheck("file-storage", () =>
         {
-            var webRoot     = hostEnv.WebRootPath ?? Path.Combine(hostEnv.ContentRootPath, "wwwroot");
+            var webRoot = hostEnv.WebRootPath ?? Path.Combine(hostEnv.ContentRootPath, "wwwroot");
             var uploadsPath = Path.Combine(webRoot, "uploads");
             return Directory.Exists(uploadsPath)
                 ? HealthCheckResult.Healthy()
@@ -58,10 +58,10 @@ else
 
     builder.Services.AddSingleton(sp =>
     {
-        var config         = sp.GetRequiredService<IConfiguration>();
+        var config = sp.GetRequiredService<IConfiguration>();
         var connectionString = config["BlobStorage:ConnectionString"]
                                ?? throw new InvalidOperationException("BlobStorage:ConnectionString is required in production.");
-        var containerName  = config["BlobStorage:ContainerName"] ?? "uploads";
+        var containerName = config["BlobStorage:ContainerName"] ?? "uploads";
 
         return new BlobContainerClient(connectionString, containerName);
     });
@@ -75,10 +75,10 @@ else
 builder.Services.Scan(scan => scan
     .FromAssemblies(typeof(Program).Assembly)
     .AddClasses(c => c.Where(t =>
-        t.Name.EndsWith("Getter")    ||
-        t.Name.EndsWith("Creator")   ||
-        t.Name.EndsWith("Updater")   ||
-        t.Name.EndsWith("Query")     ||
+        t.Name.EndsWith("Getter") ||
+        t.Name.EndsWith("Creator") ||
+        t.Name.EndsWith("Updater") ||
+        t.Name.EndsWith("Query") ||
         t.Name.EndsWith("Middleware")||
         t.Name.EndsWith("Processor")
     ))

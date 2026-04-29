@@ -1,10 +1,10 @@
-namespace DevProject.Business.Getters
+﻿namespace DevProject.Business.Getters
 {
     using System.Text.Json.Nodes;
     using Data.Entities;
     using Data.Enums;
     using Helpers;
-    using Interfaces;    public class SpecificationMappingGetter : IResourceMappingGetter
+    using Interfaces; public class SpecificationMappingGetter : IResourceMappingGetter
     {
         public bool Supports(MappingStrategy strategy) => strategy == MappingStrategy.Specification;
 
@@ -22,26 +22,26 @@ namespace DevProject.Business.Getters
             JsonConversionConfig config,
             int index)
         {
-            var id              = Guid.NewGuid().ToString();
-            var name            = CellValueJsonHelper.ResolveResourceName(row, config, index);
-            var version         = ResolveMetadataValue(row, config.VersionColumn) ?? "1.0";
-            var baseType        = apiDef.BaseType ?? "EntitySpecification";
-            var type            = config.ResourceTypeOverride ?? apiDef.ResourceType;
+            var id = Guid.NewGuid().ToString();
+            var name = CellValueJsonHelper.ResolveResourceName(row, config, index);
+            var version = ResolveMetadataValue(row, config.VersionColumn) ?? "1.0";
+            var baseType = apiDef.BaseType ?? "EntitySpecification";
+            var type = config.ResourceTypeOverride ?? apiDef.ResourceType;
             var lifecycleStatus = config.LifecycleStatusColumn is not null
                 ? ResolveMetadataValue(row, config.LifecycleStatusColumn) ?? "Active"
                 : "Active";
 
             var resource = new JsonObject
             {
-                ["id"]              = id,
-                ["href"]            = $"{apiDef.BasePath}/{apiDef.ResourceCollectionPath}/{id}",
-                ["@type"]           = type,
-                ["@baseType"]       = baseType,
-                ["name"]            = name,
-                ["version"]         = version,
+                ["id"] = id,
+                ["href"] = $"{apiDef.BasePath}/{apiDef.ResourceCollectionPath}/{id}",
+                ["@type"] = type,
+                ["@baseType"] = baseType,
+                ["name"] = name,
+                ["version"] = version,
                 ["lifecycleStatus"] = lifecycleStatus,
-                ["isBundle"]        = false,
-                ["lastUpdate"]      = DateTime.UtcNow.ToString("o")
+                ["isBundle"] = false,
+                ["lastUpdate"] = DateTime.UtcNow.ToString("o")
             };
 
             var description = ResolveMetadataValue(row, config.DescriptionColumn);
@@ -76,7 +76,7 @@ namespace DevProject.Business.Getters
 
             var charValue = new JsonObject
             {
-                ["value"]     = jsonValue,
+                ["value"] = jsonValue,
                 ["valueType"] = valueType,
                 ["isDefault"] = true
             };
@@ -86,12 +86,12 @@ namespace DevProject.Business.Getters
 
             return new JsonObject
             {
-                ["name"]           = col,
-                ["valueType"]      = valueType,
+                ["name"] = col,
+                ["valueType"] = valueType,
                 ["minCardinality"] = 0,
                 ["maxCardinality"] = 1,
-                ["isUnique"]       = false,
-                [charValueKey]     = new JsonArray { charValue }
+                ["isUnique"] = false,
+                [charValueKey] = new JsonArray { charValue }
             };
         }
 

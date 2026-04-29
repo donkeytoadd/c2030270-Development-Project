@@ -1,4 +1,4 @@
-namespace DevProject.Business.Getters
+﻿namespace DevProject.Business.Getters
 {
     using Data.Entities;
     using Data.Enums;
@@ -22,10 +22,10 @@ namespace DevProject.Business.Getters
                 return nonEmptyRows
                     .Select((row, index) => BuildOrder(
                         externalId: CellValueJsonHelper.ResolveResourceName(row, config, index, "Order"),
-                        rows:       new List<Dictionary<string, CellValue>> { row },
-                        apiDef:     apiDef,
-                        config:     config,
-                        mappings:   mappings))
+                        rows: new List<Dictionary<string, CellValue>> { row },
+                        apiDef: apiDef,
+                        config: config,
+                        mappings: mappings))
                     .ToList();
             }
 
@@ -36,10 +36,10 @@ namespace DevProject.Business.Getters
                         : string.Empty)
                 .Select(group => BuildOrder(
                     externalId: group.Key,
-                    rows:       group.ToList(),
-                    apiDef:     apiDef,
-                    config:     config,
-                    mappings:   mappings))
+                    rows: group.ToList(),
+                    apiDef: apiDef,
+                    config: config,
+                    mappings: mappings))
                 .Cast<JsonNode>()
                 .ToList();
         }
@@ -51,14 +51,14 @@ namespace DevProject.Business.Getters
             JsonConversionConfig config,
             Dictionary<string, string> mappings)
         {
-            var id   = Guid.NewGuid().ToString();
+            var id = Guid.NewGuid().ToString();
             var type = config.ResourceTypeOverride ?? apiDef.ResourceType;
 
             var order = new JsonObject
             {
-                ["id"]         = id,
-                ["href"]       = $"{apiDef.BasePath}/{apiDef.ResourceCollectionPath}/{id}",
-                ["@type"]      = type,
+                ["id"] = id,
+                ["href"] = $"{apiDef.BasePath}/{apiDef.ResourceCollectionPath}/{id}",
+                ["@type"] = type,
                 ["externalId"] = externalId
             };
 
@@ -106,8 +106,8 @@ namespace DevProject.Business.Getters
 
             var item = new JsonObject
             {
-                ["id"]     = (itemIndex + 1).ToString(),
-                ["@type"]  = itemType,
+                ["id"] = (itemIndex + 1).ToString(),
+                ["@type"] = itemType,
                 ["action"] = action
             };
 
@@ -148,8 +148,8 @@ namespace DevProject.Business.Getters
 
                 charArray.Add(new JsonObject
                 {
-                    ["name"]      = col,
-                    ["value"]     = CellValueJsonHelper.ToJsonNode(cell),
+                    ["name"] = col,
+                    ["value"] = CellValueJsonHelper.ToJsonNode(cell),
                     ["valueType"] = CellValueJsonHelper.MapValueType(cell.Type)
                 });
             }

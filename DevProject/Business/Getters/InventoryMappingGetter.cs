@@ -1,10 +1,10 @@
-namespace DevProject.Business.Getters
+﻿namespace DevProject.Business.Getters
 {
     using Data.Entities;
     using Data.Enums;
     using Helpers;
     using Interfaces;
-    using System.Text.Json.Nodes;    public class InventoryMappingGetter : IResourceMappingGetter
+    using System.Text.Json.Nodes; public class InventoryMappingGetter : IResourceMappingGetter
     {
         public bool Supports(MappingStrategy strategy) => strategy == MappingStrategy.Inventory;
 
@@ -22,16 +22,16 @@ namespace DevProject.Business.Getters
             JsonConversionConfig config,
             int index)
         {
-            var id   = Guid.NewGuid().ToString();
+            var id = Guid.NewGuid().ToString();
             var name = CellValueJsonHelper.ResolveResourceName(row, config, index);
             var type = config.ResourceTypeOverride ?? apiDef.ResourceType;
 
             var resource = new JsonObject
             {
-                ["id"]    = id,
-                ["href"]  = $"{apiDef.BasePath}/{apiDef.ResourceCollectionPath}/{id}",
+                ["id"] = id,
+                ["href"] = $"{apiDef.BasePath}/{apiDef.ResourceCollectionPath}/{id}",
                 ["@type"] = type,
-                ["name"]  = name
+                ["name"] = name
             };
 
             if (config.LifecycleStatusColumn is not null)
@@ -61,8 +61,8 @@ namespace DevProject.Business.Getters
 
                 var charObj = new JsonObject
                 {
-                    ["name"]      = col,
-                    ["value"]     = jsonValue,
+                    ["name"] = col,
+                    ["value"] = jsonValue,
                     ["valueType"] = valueType
                 };
                 if (unitOfMeasure is not null)

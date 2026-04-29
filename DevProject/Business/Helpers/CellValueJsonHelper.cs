@@ -1,4 +1,4 @@
-namespace DevProject.Business.Helpers
+﻿namespace DevProject.Business.Helpers
 {
     using System.Globalization;
     using System.Text.Json.Nodes;
@@ -6,18 +6,18 @@ namespace DevProject.Business.Helpers
     using Data.Entities;
     using Data.Enums;
     internal static class CellValueJsonHelper
-    {        private static readonly Regex UnitPattern = new(
-            @"^\s*(\d+(?:\.\d+)?)\s+([A-Za-z][A-Za-z/°%]*)\s*$",
+    { private static readonly Regex UnitPattern = new(
+            @"^\s*(\d+(?:\.\d+)?)\s+([A-Za-z][A-Za-z/Â°%]*)\s*$",
             RegexOptions.Compiled);
 
         internal static JsonNode? ToJsonNode(CellValue cell) => cell switch
         {
-            NumberCellValue   n  => JsonValue.Create(n.Value),
-            BooleanCellValue  b  => JsonValue.Create(b.Value),
+            NumberCellValue n => JsonValue.Create(n.Value),
+            BooleanCellValue b => JsonValue.Create(b.Value),
             DateTimeCellValue dt => JsonValue.Create(dt.Value.ToString("o")),
-            TextCellValue     t  => JsonValue.Create(t.Value),
-            _                    => null
-        };        internal static JsonNode? TryParseJson(CellValue cell)
+            TextCellValue t => JsonValue.Create(t.Value),
+            _ => null
+        }; internal static JsonNode? TryParseJson(CellValue cell)
         {
             if (cell is not TextCellValue t) return null;
             if (string.IsNullOrWhiteSpace(t.Value)) return null;
@@ -33,11 +33,11 @@ namespace DevProject.Business.Helpers
 
         internal static string MapValueType(CellValueType type) => type switch
         {
-            CellValueType.Number   => "number",
-            CellValueType.Boolean  => "boolean",
+            CellValueType.Number => "number",
+            CellValueType.Boolean => "boolean",
             CellValueType.DateTime => "dateTime",
-            _                      => "string"
-        };        internal static string ResolveResourceName(
+            _ => "string"
+        }; internal static string ResolveResourceName(
             Dictionary<string, CellValue> row,
             JsonConversionConfig config,
             int index,
@@ -58,8 +58,8 @@ namespace DevProject.Business.Helpers
         }
         internal static bool IsMetadataColumn(string column, JsonConversionConfig config)
         {
-            if (config.NameColumn        is not null && config.NameColumn        == column) return true;
-            if (config.VersionColumn     is not null && config.VersionColumn     == column) return true;
+            if (config.NameColumn is not null && config.NameColumn == column) return true;
+            if (config.VersionColumn is not null && config.VersionColumn == column) return true;
             if (config.DescriptionColumn is not null && config.DescriptionColumn == column) return true;
             return false;
         }

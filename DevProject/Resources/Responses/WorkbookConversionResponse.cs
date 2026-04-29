@@ -1,11 +1,11 @@
-namespace DevProject.Resources.Responses
+﻿namespace DevProject.Resources.Responses
 {
     using Data.Entities;
     using System.Text.Json.Nodes;
 
     public class WorkbookConversionResponse
     {
-        public required string FileId { get; set; }        public required string ResultId { get; set; }
+        public required string FileId { get; set; } public required string ResultId { get; set; }
 
         public required string WorkbookName { get; set; }
         public required string ApiId { get; set; }

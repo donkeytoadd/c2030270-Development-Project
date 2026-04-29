@@ -4,7 +4,7 @@
     using Data.Entities;
     using Interfaces;
 
-    public class ColumnGetter  : IColumnGetter
+    public class ColumnGetter : IColumnGetter
     {
         public List<Column> Get(IXLRangeRow columnRow, int lastColumnIndex)
         {
@@ -18,13 +18,13 @@
                 {
                     headers.Add(new Column
                     {
-                        ColumnIndex =  columnIndex,
-                        Name =  value
+                        ColumnIndex = columnIndex,
+                        Name = value
                     });
                 }
             }
-            
-            var seen   = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            var seen = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var result = new List<Column>();
 
             foreach (var column in headers)
@@ -41,14 +41,14 @@
                     seen[column.Name]++;
                     uniqueName = $"{column.Name}_{seen[column.Name]}";
                 }
-                
-                result.Add(new Column 
-                { 
+
+                result.Add(new Column
+                {
                     ColumnIndex = column.ColumnIndex,
                     Name = uniqueName
                 });
             }
-            
+
             return result;
         }
     }

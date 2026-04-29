@@ -1,10 +1,10 @@
-namespace DevProject.Business.Getters
+﻿namespace DevProject.Business.Getters
 {
     using Data.Entities;
     using Data.Enums;
     using Helpers;
     using Interfaces;
-    using System.Text.Json.Nodes;    public class FieldMappedMappingGetter : IResourceMappingGetter
+    using System.Text.Json.Nodes; public class FieldMappedMappingGetter : IResourceMappingGetter
     {
         public bool Supports(MappingStrategy strategy) => strategy == MappingStrategy.FieldMapped;
 
@@ -22,17 +22,17 @@ namespace DevProject.Business.Getters
             JsonConversionConfig config,
             int index)
         {
-            var id            = Guid.NewGuid().ToString();
-            var name          = CellValueJsonHelper.ResolveResourceName(row, config, index);
+            var id = Guid.NewGuid().ToString();
+            var name = CellValueJsonHelper.ResolveResourceName(row, config, index);
             var fieldMappings = config.FieldMappings ?? new Dictionary<string, string>();
-            var type          = config.ResourceTypeOverride ?? apiDef.ResourceType;
+            var type = config.ResourceTypeOverride ?? apiDef.ResourceType;
 
             var resource = new JsonObject
             {
-                ["id"]    = id,
-                ["href"]  = $"{apiDef.BasePath}/{apiDef.ResourceCollectionPath}/{id}",
+                ["id"] = id,
+                ["href"] = $"{apiDef.BasePath}/{apiDef.ResourceCollectionPath}/{id}",
                 ["@type"] = type,
-                ["name"]  = name
+                ["name"] = name
             };
 
             var charArray = new JsonArray();
@@ -49,8 +49,8 @@ namespace DevProject.Business.Getters
                 {
                     charArray.Add(new JsonObject
                     {
-                        ["name"]      = col,
-                        ["value"]     = CellValueJsonHelper.ToJsonNode(cell),
+                        ["name"] = col,
+                        ["value"] = CellValueJsonHelper.ToJsonNode(cell),
                         ["valueType"] = CellValueJsonHelper.MapValueType(cell.Type)
                     });
                 }

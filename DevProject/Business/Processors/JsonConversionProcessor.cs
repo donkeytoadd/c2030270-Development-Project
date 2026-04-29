@@ -1,4 +1,4 @@
-namespace DevProject.Business.Processors
+﻿namespace DevProject.Business.Processors
 {
     using Data.Entities;
     using Getters.Interfaces;
@@ -27,20 +27,20 @@ namespace DevProject.Business.Processors
         {
             var apiDef = this.tmForumApiCatalogGetter.GetById(config.ApiId);
 
-            var warnings   = this.jsonConversionRowValidationProcessor.Validate(parsedData.Rows, config);
-            var resources  = this.tmForumResourceGetter.GetAll(parsedData, apiDef, config);
+            var warnings = this.jsonConversionRowValidationProcessor.Validate(parsedData.Rows, config);
+            var resources = this.tmForumResourceGetter.GetAll(parsedData, apiDef, config);
             var validation = this.tmForumSchemaValidationProcessor.Validate(resources, apiDef.ApiId);
 
             return new JsonConversionResult
             {
-                SheetName      = parsedData.SpreadsheetName,
-                ApiId          = apiDef.ApiId,
-                ApiName        = apiDef.Name,
-                ResourceType   = apiDef.ResourceType,
+                SheetName = parsedData.SpreadsheetName,
+                ApiId = apiDef.ApiId,
+                ApiName = apiDef.Name,
+                ResourceType = apiDef.ResourceType,
                 TotalResources = resources.Count,
-                Resources      = resources,
-                Validation     = validation,
-                Warnings       = warnings
+                Resources = resources,
+                Validation = validation,
+                Warnings = warnings
             };
         }
     }

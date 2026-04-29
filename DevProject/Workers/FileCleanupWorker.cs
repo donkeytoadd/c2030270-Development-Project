@@ -1,6 +1,6 @@
-namespace DevProject.Workers
+﻿namespace DevProject.Workers
 {
-    using Microsoft.Extensions.Hosting;    public class FileCleanupWorker : BackgroundService
+    using Microsoft.Extensions.Hosting; public class FileCleanupWorker : BackgroundService
     {
         private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(1);
 
@@ -13,7 +13,7 @@ namespace DevProject.Workers
             IConfiguration config,
             ILogger<FileCleanupWorker> logger)
         {
-            _env    = env;
+            _env = env;
             _config = config;
             _logger = logger;
         }
@@ -32,12 +32,12 @@ namespace DevProject.Workers
         private void CleanUp()
         {
             var retentionHours = _config.GetValue<int>("FileCleanup:RetentionHours", 24);
-            var uploadsPath    = Path.Combine(_env.WebRootPath, "uploads");
+            var uploadsPath = Path.Combine(_env.WebRootPath, "uploads");
 
             if (!Directory.Exists(uploadsPath))
                 return;
 
-            var cutoff  = DateTime.UtcNow.AddHours(-retentionHours);
+            var cutoff = DateTime.UtcNow.AddHours(-retentionHours);
             var deleted = 0;
 
             foreach (var file in Directory.GetFiles(uploadsPath))

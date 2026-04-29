@@ -1,8 +1,8 @@
-namespace DevProject.Business.Processors
+﻿namespace DevProject.Business.Processors
 {
     using Data.Entities;
     using Data.Enums;
-    using Interfaces;    public class JsonConversionRowValidationProcessor : IJsonConversionRowValidationProcessor
+    using Interfaces; public class JsonConversionRowValidationProcessor : IJsonConversionRowValidationProcessor
     {
         public List<string> Validate(List<Dictionary<string, CellValue>> rows, JsonConversionConfig config)
         {
@@ -10,7 +10,7 @@ namespace DevProject.Business.Processors
 
             for (var i = 0; i < rows.Count; i++)
             {
-                var row    = rows[i];
+                var row = rows[i];
                 var rowNum = i + 1;
 
                 var hasData = row.Values.Any(cell => !cell.IsEmpty);
@@ -27,7 +27,7 @@ namespace DevProject.Business.Processors
 
                     if (!hasName)
                         warnings.Add(
-                            $"Row {rowNum}: name column '{config.NameColumn}' is missing or empty — a fallback name will be used.");
+                            $"Row {rowNum}: name column '{config.NameColumn}' is missing or empty â€” a fallback name will be used.");
                 }
             }
 

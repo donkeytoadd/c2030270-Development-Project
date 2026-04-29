@@ -1,4 +1,4 @@
-namespace DevProject.Data.Entities
+﻿namespace DevProject.Data.Entities
 {
     using Data.Enums;
 
@@ -11,8 +11,8 @@ namespace DevProject.Data.Entities
         public required string ResourceCollectionPath { get; set; }
         public required string Version { get; set; }
         public string CharacteristicArrayKey { get; set; } = "resourceSpecCharacteristic";
-        public string CharacteristicValueArrayKey { get; set; } = "resourceSpecCharacteristicValue";        public string OrderItemCharacteristicKey { get; set; } = "characteristic";
-        public string OrderItemNestedObjectKey { get; set; } = "product";        public string OrderItemNestedObjectType { get; set; } = "ProductRefOrValue";
-        public MappingStrategy MappingStrategy { get; set; } = MappingStrategy.Specification;        public string? BaseType { get; set; }
+        public string CharacteristicValueArrayKey { get; set; } = "resourceSpecCharacteristicValue"; public string OrderItemCharacteristicKey { get; set; } = "characteristic";
+        public string OrderItemNestedObjectKey { get; set; } = "product"; public string OrderItemNestedObjectType { get; set; } = "ProductRefOrValue";
+        public MappingStrategy MappingStrategy { get; set; } = MappingStrategy.Specification; public string? BaseType { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-namespace DevProject.Business.Processors
+﻿namespace DevProject.Business.Processors
 {
     using ClosedXML.Excel;
     using Data.Entities;
@@ -50,7 +50,7 @@ namespace DevProject.Business.Processors
                 return new ParsedWorkbook
                 {
                     WorkbookName = Path.GetFileNameWithoutExtension(fileName),
-                    Sheets       = sheets
+                    Sheets = sheets
                 };
             }
         }
@@ -67,7 +67,7 @@ namespace DevProject.Business.Processors
                 return EmptySheet(worksheet.Name);
 
             var lastColumn = usedRange.LastColumn().ColumnNumber();
-            var columns    = this.columnGetter.Get(usedRows[0], lastColumn);
+            var columns = this.columnGetter.Get(usedRows[0], lastColumn);
 
             if (columns.Count == 0)
                 return EmptySheet(worksheet.Name);
@@ -77,9 +77,9 @@ namespace DevProject.Business.Processors
             return new ParsedExcelData
             {
                 SpreadsheetName = worksheet.Name,
-                ColumnNames     = columns.Select(c => c.Name).ToList(),
-                Rows            = rows,
-                TotalRows       = rows.Count
+                ColumnNames = columns.Select(c => c.Name).ToList(),
+                Rows = rows,
+                TotalRows = rows.Count
             };
         }
 
@@ -87,8 +87,8 @@ namespace DevProject.Business.Processors
             new ParsedExcelData
             {
                 SpreadsheetName = name,
-                ColumnNames     = new List<string>(),
-                Rows            = new List<Dictionary<string, CellValue>>()
+                ColumnNames = new List<string>(),
+                Rows = new List<Dictionary<string, CellValue>>()
             };
     }
 }

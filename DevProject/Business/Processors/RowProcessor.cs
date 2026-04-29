@@ -14,7 +14,7 @@
         {
             this.cellValueGetter = cellValueGetter;
         }
-        
+
         public List<Dictionary<string, CellValue>> Process(IEnumerable<IXLRangeRow> dataRows, List<Column> columnMap)
         {
             var result = new List<Dictionary<string, CellValue>>();
@@ -31,7 +31,7 @@
 
             return result;
         }
-        
+
         private Dictionary<string, CellValue> BuildRowDictionary(IXLRangeRow row, List<Column> columnMap)
         {
             var dictionary = new Dictionary<string, CellValue>();

@@ -1,4 +1,4 @@
-namespace DevProject.Infrastructure
+﻿namespace DevProject.Infrastructure
 {
     using System.Collections.Concurrent;
     public class ConversionResultStore : IConversionResultStore
@@ -18,12 +18,12 @@ namespace DevProject.Infrastructure
             if (Cache.TryGetValue(resultId, out var entry))
             {
                 filename = entry.Filename;
-                json     = entry.Json;
+                json = entry.Json;
                 return true;
             }
 
             filename = null;
-            json     = null;
+            json = null;
             return false;
         }
     }

@@ -1,4 +1,4 @@
-namespace DevProject.Controllers
+﻿namespace DevProject.Controllers
 {
     using Business.Processors.Interfaces;
     using Business.Storage.Interfaces;
@@ -23,9 +23,9 @@ namespace DevProject.Controllers
             ISpreadsheetProcessor spreadsheetProcessor,
             IFileStorage fileStorage)
         {
-            this.logger             = logger;
+            this.logger = logger;
             this.spreadsheetProcessor = spreadsheetProcessor;
-            this.fileStorage        = fileStorage;
+            this.fileStorage = fileStorage;
         }
 
         [HttpPost("UploadFile")]
@@ -44,7 +44,7 @@ namespace DevProject.Controllers
                     return BadRequest($"Only {string.Join(",", allowedExtensions)} file extensions are allowed");
 
                 if (fileUploadRequest.File.Length > maxFileSize)
-                    return BadRequest($"File size cannot be larger than {maxFileSize} MB");                using var memoryStream = new MemoryStream();
+                    return BadRequest($"File size cannot be larger than {maxFileSize} MB"); using var memoryStream = new MemoryStream();
                 await fileUploadRequest.File.CopyToAsync(memoryStream, ct);
                 memoryStream.Position = 0;
 
@@ -61,13 +61,13 @@ namespace DevProject.Controllers
 
                     var response = new FileUploadResponse
                     {
-                        FileId       = fileId,
+                        FileId = fileId,
                         WorkbookName = workbook.WorkbookName,
-                        Sheets       = workbook.Sheets.Select(s => new ParsedSheetResponse
+                        Sheets = workbook.Sheets.Select(s => new ParsedSheetResponse
                         {
-                            SheetName   = s.SpreadsheetName,
+                            SheetName = s.SpreadsheetName,
                             ColumnNames = s.ColumnNames,
-                            TotalRows   = s.TotalRows ?? 0
+                            TotalRows = s.TotalRows ?? 0
                         }).ToList()
                     };
 

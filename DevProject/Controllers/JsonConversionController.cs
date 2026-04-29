@@ -1,4 +1,4 @@
-namespace DevProject.Controllers
+﻿namespace DevProject.Controllers
 {
     using Business.Getters.Interfaces;
     using Business.Processors.Interfaces;
@@ -37,16 +37,16 @@ namespace DevProject.Controllers
             IConversionResultStore conversionResultStore,
             IFileStorage fileStorage)
         {
-            this.logger                     = logger;
-            this.spreadsheetProcessor       = spreadsheetProcessor;
-            this.jsonConversionProcessor    = jsonConversionProcessor;
+            this.logger = logger;
+            this.spreadsheetProcessor = spreadsheetProcessor;
+            this.jsonConversionProcessor = jsonConversionProcessor;
             this.workbookConversionProcessor = workbookConversionProcessor;
-            this.schemaValidationProcessor  = schemaValidationProcessor;
-            this.tmForumApiCatalogGetter    = tmForumApiCatalogGetter;
-            this.tmForumApiDetectorGetter   = tmForumApiDetectorGetter;
-            this.mappingTemplateGetter      = mappingTemplateGetter;
-            this.conversionResultStore      = conversionResultStore;
-            this.fileStorage                = fileStorage;
+            this.schemaValidationProcessor = schemaValidationProcessor;
+            this.tmForumApiCatalogGetter = tmForumApiCatalogGetter;
+            this.tmForumApiDetectorGetter = tmForumApiDetectorGetter;
+            this.mappingTemplateGetter = mappingTemplateGetter;
+            this.conversionResultStore = conversionResultStore;
+            this.fileStorage = fileStorage;
         }
 
         [HttpPost("ConvertWorkbook")]
@@ -68,13 +68,13 @@ namespace DevProject.Controllers
                     return BadRequest("Provide either 'apiId' (to use a built-in template) or a full 'template' object.");
 
                 await using var stream = await fileStorage.OpenReadAsync(request.FileId, ct);
-                var workbook   = spreadsheetProcessor.Process(stream, request.FileId);
-                var result     = workbookConversionProcessor.Convert(workbook, template);
+                var workbook = spreadsheetProcessor.Process(stream, request.FileId);
+                var result = workbookConversionProcessor.Convert(workbook, template);
                 var validation = schemaValidationProcessor.Validate([result.Output], result.ApiId);
 
                 var outputJson = result.Output.ToJsonString();
-                var filename   = $"{result.WorkbookName}_{result.ApiId}.json";
-                var resultId   = conversionResultStore.Store(filename, outputJson);
+                var filename = $"{result.WorkbookName}_{result.ApiId}.json";
+                var resultId = conversionResultStore.Store(filename, outputJson);
 
                 logger.LogInformation(
                     "ConvertWorkbook '{FileId}' via {ApiId} ({ResourceType}): {Sheets} sheets, {Warnings} warnings, valid={Valid} ({Pct}%).",
@@ -84,15 +84,15 @@ namespace DevProject.Controllers
 
                 return Ok(new WorkbookConversionResponse
                 {
-                    FileId       = request.FileId,
-                    ResultId     = resultId,
+                    FileId = request.FileId,
+                    ResultId = resultId,
                     WorkbookName = result.WorkbookName,
-                    ApiId        = result.ApiId,
-                    ApiName      = result.ApiName,
+                    ApiId = result.ApiId,
+                    ApiName = result.ApiName,
                     ResourceType = result.ResourceType,
-                    Output       = result.Output,
-                    Validation   = validation,
-                    Warnings     = result.Warnings
+                    Output = result.Output,
+                    Validation = validation,
+                    Warnings = result.Warnings
                 });
             }
             catch (ProcessExcelException ex)
@@ -137,8 +137,13 @@ namespace DevProject.Controllers
             try
             {
                 await using var stream = await fileStorage.OpenReadAsync(fileId, ct);
-                var workbook           = spreadsheetProcessor.Process(stream, fileId);
-                var detection          = tmForumApiDetectorGetter.DetectApi(workbook);
+                var workbook = spreadsheetProcessor.Process(stream, fileId);
+                foreach (var sheet in workbook.Sheets)
+                {
+                    logger.LogInformation("Sheet '{SheetName}' columns: {Columns}",
+                        sheet.SpreadsheetName, string.Join(", ", sheet.ColumnNames));
+                }
+                var detection = tmForumApiDetectorGetter.DetectApi(workbook);
                 return Ok(detection);
             }
             catch (Exception ex)
@@ -177,15 +182,15 @@ namespace DevProject.Controllers
 
                 return Ok(new JsonConversionResponse
                 {
-                    FileId         = request.FileId,
-                    SheetName      = result.SheetName,
-                    ApiId          = result.ApiId,
-                    ApiName        = result.ApiName,
-                    ResourceType   = result.ResourceType,
+                    FileId = request.FileId,
+                    SheetName = result.SheetName,
+                    ApiId = result.ApiId,
+                    ApiName = result.ApiName,
+                    ResourceType = result.ResourceType,
                     TotalResources = result.TotalResources,
-                    Validation     = result.Validation,
-                    Resources      = result.Resources,
-                    Warnings       = result.Warnings
+                    Validation = result.Validation,
+                    Resources = result.Resources,
+                    Warnings = result.Warnings
                 });
             }
             catch (ProcessExcelException ex)

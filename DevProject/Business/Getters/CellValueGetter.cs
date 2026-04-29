@@ -10,18 +10,18 @@
         {
             return cell.Value.Type switch
             {
-                XLDataType.Number   => CellValue.FromNumber(cell.Value.GetNumber()),
-                XLDataType.Boolean  => CellValue.FromBoolean(cell.Value.GetBoolean()),
+                XLDataType.Number => CellValue.FromNumber(cell.Value.GetNumber()),
+                XLDataType.Boolean => CellValue.FromBoolean(cell.Value.GetBoolean()),
                 XLDataType.DateTime => CellValue.FromDateTime(cell.Value.GetDateTime()),
-                XLDataType.Blank    => CellValue.Empty(),
-                _                   => CellValue.FromText(cell.Value.ToString())
+                XLDataType.Blank => CellValue.Empty(),
+                _ => CellValue.FromText(cell.Value.ToString())
             };
         }
-        
+
         public bool IsEmpty(IXLCell cell)
         {
-            return cell.Value.Type == XLDataType.Blank || 
-                   (cell.Value.Type == XLDataType.Text && 
+            return cell.Value.Type == XLDataType.Blank ||
+                   (cell.Value.Type == XLDataType.Text &&
                     string.IsNullOrWhiteSpace(cell.Value.ToString()));
         }
     }

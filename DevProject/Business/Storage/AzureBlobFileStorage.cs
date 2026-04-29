@@ -1,4 +1,4 @@
-namespace DevProject.Business.Storage
+﻿namespace DevProject.Business.Storage
 {
     using Azure.Storage.Blobs;
     using Interfaces;
@@ -12,7 +12,7 @@ namespace DevProject.Business.Storage
         public AzureBlobFileStorage(BlobContainerClient containerClient, ILogger<AzureBlobFileStorage> logger)
         {
             this.containerClient = containerClient;
-            this.logger          = logger;
+            this.logger = logger;
         }
 
         public async Task<string> SaveAsync(Stream stream, string fileExtension, CancellationToken ct)
@@ -20,7 +20,7 @@ namespace DevProject.Business.Storage
             await EnsureContainerAsync(ct);
 
             var fileId = $"{Guid.NewGuid()}{fileExtension}";
-            var blob   = containerClient.GetBlobClient(fileId);
+            var blob = containerClient.GetBlobClient(fileId);
             await blob.UploadAsync(stream, overwrite: true, ct);
 
             logger.LogInformation("Saved blob '{FileId}'.", fileId);
@@ -30,7 +30,7 @@ namespace DevProject.Business.Storage
         public async Task<Stream> OpenReadAsync(string fileId, CancellationToken ct)
         {
             var blob = containerClient.GetBlobClient(fileId);
-            var ms   = new MemoryStream();
+            var ms = new MemoryStream();
             await blob.DownloadToAsync(ms, ct);
             ms.Position = 0;
             return ms;
@@ -38,7 +38,7 @@ namespace DevProject.Business.Storage
 
         public async Task<bool> ExistsAsync(string fileId, CancellationToken ct)
         {
-            var blob     = containerClient.GetBlobClient(fileId);
+            var blob = containerClient.GetBlobClient(fileId);
             var response = await blob.ExistsAsync(ct);
             return response.Value;
         }

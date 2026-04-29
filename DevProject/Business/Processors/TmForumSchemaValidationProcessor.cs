@@ -1,4 +1,4 @@
-namespace DevProject.Business.Processors
+﻿namespace DevProject.Business.Processors
 {
     using System.Collections.Concurrent;
     using System.Reflection;
@@ -10,7 +10,7 @@ namespace DevProject.Business.Processors
     using Json.Schema;
 
     public class TmForumSchemaValidationProcessor : ITmForumSchemaValidationProcessor
-    {        private static readonly ConcurrentDictionary<string, JsonSchema> SchemaCache =
+    { private static readonly ConcurrentDictionary<string, JsonSchema> SchemaCache =
             new(StringComparer.OrdinalIgnoreCase);
 
         public ValidationReport Validate(List<JsonNode> resources, string apiId)
@@ -19,17 +19,17 @@ namespace DevProject.Business.Processors
             if (schema is null)
                 return new ValidationReport { IsValid = true };
 
-            var issues      = new List<ValidationIssue>();
+            var issues = new List<ValidationIssue>();
             var evalOptions = new EvaluationOptions { OutputFormat = OutputFormat.List };
 
             for (var i = 0; i < resources.Count; i++)
             {
-                var resource     = resources[i];
-                var json         = resource?.ToJsonString() ?? "{}";
+                var resource = resources[i];
+                var json = resource?.ToJsonString() ?? "{}";
                 var resourceName = resource?["name"]?.GetValue<string>() ?? $"Resource_{i + 1}";
 
                 using var doc = JsonDocument.Parse(json);
-                var result    = schema.Evaluate(doc.RootElement, evalOptions);
+                var result = schema.Evaluate(doc.RootElement, evalOptions);
 
                 if (!result.IsValid)
                 {
@@ -40,10 +40,10 @@ namespace DevProject.Business.Processors
                             issues.Add(new ValidationIssue
                             {
                                 ResourceIndex = i,
-                                ResourceName  = resourceName,
-                                Field         = detail.InstanceLocation.ToString(),
-                                Message       = message,
-                                Severity      = IsFalseSchemaMessage(message)
+                                ResourceName = resourceName,
+                                Field = detail.InstanceLocation.ToString(),
+                                Message = message,
+                                Severity = IsFalseSchemaMessage(message)
                                     ? ValidationSeverity.SchemaArtefact
                                     : ValidationSeverity.Error,
                             });
@@ -52,28 +52,28 @@ namespace DevProject.Business.Processors
                 }
             }
 
-            var errorIssues        = issues.Where(i => i.Severity == ValidationSeverity.Error).ToList();
+            var errorIssues = issues.Where(i => i.Severity == ValidationSeverity.Error).ToList();
             var distinctErrorPaths = errorIssues.Select(i => i.Field).Distinct(StringComparer.Ordinal).Count();
-            var totalPaths         = resources.Sum(r => CountJsonLeafPaths(r));
-            var artefactPaths      = issues
+            var totalPaths = resources.Sum(r => CountJsonLeafPaths(r));
+            var artefactPaths = issues
                 .Where(i => i.Severity == ValidationSeverity.SchemaArtefact)
                 .Select(i => i.Field)
                 .Distinct(StringComparer.Ordinal)
                 .Count();
             var effectivePaths = totalPaths - artefactPaths;
-            var compliance     = effectivePaths <= 0
+            var compliance = effectivePaths <= 0
                 ? 100.0
                 : Math.Round(Math.Max(0, (effectivePaths - distinctErrorPaths) / (double)effectivePaths * 100), 1);
 
             return new ValidationReport
             {
-                IsValid              = errorIssues.Count == 0,
-                TotalIssues          = errorIssues.Count,
-                ArtefactCount        = issues.Count(i => i.Severity == ValidationSeverity.SchemaArtefact),
+                IsValid = errorIssues.Count == 0,
+                TotalIssues = errorIssues.Count,
+                ArtefactCount = issues.Count(i => i.Severity == ValidationSeverity.SchemaArtefact),
                 CompliancePercentage = compliance,
-                Issues               = issues
+                Issues = issues
             };
-        }        private static bool IsFalseSchemaMessage(string message) =>
+        } private static bool IsFalseSchemaMessage(string message) =>
             message.Contains("All values fail against the false schema",
                 StringComparison.OrdinalIgnoreCase);
 
@@ -85,8 +85,8 @@ namespace DevProject.Business.Processors
                     kv.Value is JsonObject || kv.Value is JsonArray
                         ? CountJsonLeafPaths(kv.Value)
                         : 1),
-                JsonArray arr  => arr.Sum(CountJsonLeafPaths),
-                _              => 1
+                JsonArray arr => arr.Sum(CountJsonLeafPaths),
+                _ => 1
             };
         }
 

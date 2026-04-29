@@ -1,4 +1,4 @@
-namespace DevProject.Business.Storage
+﻿namespace DevProject.Business.Storage
 {
     using Interfaces;
     using Microsoft.AspNetCore.Hosting;
@@ -10,7 +10,7 @@ namespace DevProject.Business.Storage
 
         public LocalFileStorage(IWebHostEnvironment env, ILogger<LocalFileStorage> logger)
         {
-            this.env    = env;
+            this.env = env;
             this.logger = logger;
         }
 
@@ -21,7 +21,7 @@ namespace DevProject.Business.Storage
             var dir = UploadsPath;
             Directory.CreateDirectory(dir);
 
-            var fileId   = $"{Guid.NewGuid()}{fileExtension}";
+            var fileId = $"{Guid.NewGuid()}{fileExtension}";
             var filePath = Path.Combine(dir, fileId);
 
             using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);

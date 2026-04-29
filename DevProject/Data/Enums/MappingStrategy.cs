@@ -1,10 +1,10 @@
-namespace DevProject.Data.Enums
+﻿namespace DevProject.Data.Enums
 {
     public enum MappingStrategy
     {
         Specification,
         Inventory,
         Order,
-        FieldMapped,        Raw
+        FieldMapped, Raw
     }
 }

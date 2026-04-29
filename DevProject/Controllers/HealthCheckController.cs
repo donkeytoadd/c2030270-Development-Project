@@ -4,9 +4,9 @@
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-    [ApiController] 
+    [ApiController]
     [Route("api/[controller]/")]
-    public class HealthCheckController : ControllerBase 
+    public class HealthCheckController : ControllerBase
     {
         private readonly ILogger<HealthCheckController> logger;
         private readonly HealthCheckService healthCheckService;

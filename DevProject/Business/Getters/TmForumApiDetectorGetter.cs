@@ -1,4 +1,4 @@
-namespace DevProject.Business.Getters
+﻿namespace DevProject.Business.Getters
 {
     using System.Text.RegularExpressions;
     using Business.Helpers;
@@ -10,13 +10,13 @@ namespace DevProject.Business.Getters
         private static readonly Regex TmfIdPattern =
             new(@"TMF\d{3}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private const double WeightSheet    = 3.0;
-        private const double WeightColumn   = 2.0;
+        private const double WeightSheet = 3.0;
+        private const double WeightColumn = 2.0;
         private const double WeightFilename = 1.0;
-        private const double MaxRaw         = WeightSheet + WeightColumn + WeightFilename;
+        private const double MaxRaw = WeightSheet + WeightColumn + WeightFilename;
 
         private const int AutoSelectMinConfidence = 70;
-        private const int AutoSelectMinGap        = 20;
+        private const int AutoSelectMinGap = 20;
 
         private readonly IMappingTemplateGetter mappingTemplateGetter;
 
@@ -75,8 +75,8 @@ namespace DevProject.Business.Getters
                     fileMatch.Value.Equals(template.ApiId, StringComparison.OrdinalIgnoreCase)
                     ? 1.0 : 0.0;
 
-                double raw        = sheetScore * WeightSheet + colScore * WeightColumn + filenameScore * WeightFilename;
-                int    confidence = (int)Math.Round(raw / MaxRaw * 100);
+                double raw = sheetScore * WeightSheet + colScore * WeightColumn + filenameScore * WeightFilename;
+                int confidence = (int)Math.Round(raw / MaxRaw * 100);
 
                 var matched = new List<string>();
                 var missing = new List<string>();
@@ -89,9 +89,9 @@ namespace DevProject.Business.Getters
 
                 candidates.Add(new ApiDetectionCandidate
                 {
-                    ApiId          = template.ApiId,
-                    ApiName        = template.ApiName,
-                    Confidence     = confidence,
+                    ApiId = template.ApiId,
+                    ApiName = template.ApiName,
+                    Confidence = confidence,
                     MatchedSignals = matched,
                     MissingSignals = missing,
                 });
@@ -102,9 +102,9 @@ namespace DevProject.Business.Getters
             string? autoSelected = null;
             if (candidates.Count > 0)
             {
-                var top    = candidates[0];
+                var top = candidates[0];
                 var second = candidates.Count > 1 ? candidates[1] : null;
-                int gap    = second is null ? 100 : top.Confidence - second.Confidence;
+                int gap = second is null ? 100 : top.Confidence - second.Confidence;
 
                 if (top.Confidence >= AutoSelectMinConfidence && gap >= AutoSelectMinGap)
                     autoSelected = top.ApiId;
@@ -112,7 +112,7 @@ namespace DevProject.Business.Getters
 
             return new ApiDetectionResult
             {
-                Candidates       = candidates,
+                Candidates = candidates,
                 AutoSelectedApiId = autoSelected,
             };
         }
@@ -122,10 +122,10 @@ namespace DevProject.Business.Getters
             var workbook = new ParsedWorkbook
             {
                 WorkbookName = data.SpreadsheetName,
-                Sheets       = [data],
+                Sheets = [data],
             };
             var result = DetectApi(workbook);
-            var top    = result.Candidates.FirstOrDefault(c => c.Confidence > 0);
+            var top = result.Candidates.FirstOrDefault(c => c.Confidence > 0);
             return top?.ApiId;
         }
     }

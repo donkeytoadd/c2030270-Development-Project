@@ -1,4 +1,4 @@
-namespace DevProject.Business.Processors
+﻿namespace DevProject.Business.Processors
 {
     using System.Text.Json.Nodes;
     using Data.Entities;
@@ -17,8 +17,8 @@ namespace DevProject.Business.Processors
             if (template.EmitId || template.EmitHref)
             {
                 var id = Guid.NewGuid().ToString();
-                if (template.EmitId)   root["id"]   = id;
-                if (template.EmitHref) root["href"]  = $"{template.BasePath}/{template.ResourceCollectionPath}/{id}";
+                if (template.EmitId) root["id"] = id;
+                if (template.EmitHref) root["href"] = $"{template.BasePath}/{template.ResourceCollectionPath}/{id}";
             }
 
             if (template.EmitLastUpdate)
@@ -36,7 +36,7 @@ namespace DevProject.Business.Processors
 
                 if (sheet is null)
                 {
-                    warnings.Add($"Sheet '{sheetMapping.SheetName}' not found in workbook — mapping skipped.");
+                    warnings.Add($"Sheet '{sheetMapping.SheetName}' not found in workbook â€” mapping skipped.");
                     continue;
                 }
 
@@ -65,11 +65,11 @@ namespace DevProject.Business.Processors
             return new WorkbookConversionResult
             {
                 WorkbookName = workbook.WorkbookName,
-                ApiId        = template.ApiId,
-                ApiName      = template.ApiName,
+                ApiId = template.ApiId,
+                ApiName = template.ApiName,
                 ResourceType = template.RootResourceType,
-                Output       = root,
-                Warnings     = warnings
+                Output = root,
+                Warnings = warnings
             };
         }
 
@@ -83,7 +83,7 @@ namespace DevProject.Business.Processors
 
             if (firstRow is null)
             {
-                warnings.Add($"Sheet '{sheetMapping.SheetName}' contains no data rows — no top-level fields written.");
+                warnings.Add($"Sheet '{sheetMapping.SheetName}' contains no data rows â€” no top-level fields written.");
                 return;
             }
 
@@ -106,7 +106,7 @@ namespace DevProject.Business.Processors
 
         private static JsonArray BuildFlatArray(ParsedExcelData sheet, SheetMapping sheetMapping)
         {
-            var array   = new JsonArray();
+            var array = new JsonArray();
             var allRows = sheet.Rows;
 
             foreach (var row in sheet.Rows)
@@ -122,7 +122,7 @@ namespace DevProject.Business.Processors
         }
 
         private static JsonArray BuildNestedArray(ParsedExcelData sheet, SheetMapping sheetMapping)
-        {            if (sheetMapping.GroupByColumn is not null)
+        { if (sheetMapping.GroupByColumn is not null)
                 return BuildGroupedNestedArray(sheet, sheetMapping);
             if (sheetMapping.ParentIdColumn is not null
                 && sheetMapping.ChildParentRefColumn is not null
@@ -133,16 +133,16 @@ namespace DevProject.Business.Processors
 
         private static JsonArray BuildGroupedNestedArray(ParsedExcelData sheet, SheetMapping sheetMapping)
         {
-            var groupByCol  = sheetMapping.GroupByColumn!;
-            var subArrayDefs = sheetMapping.SubArrayDefinitions;            var subArrayColSets = subArrayDefs
+            var groupByCol = sheetMapping.GroupByColumn!;
+            var subArrayDefs = sheetMapping.SubArrayDefinitions; var subArrayColSets = subArrayDefs
                 .Select(d => d.SubArrayColumns.ToHashSet(StringComparer.OrdinalIgnoreCase))
                 .ToList();
 
             var allSubArrayCols = subArrayDefs
                 .SelectMany(d => d.SubArrayColumns)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var groups     = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
-            var subArrays  = new Dictionary<string, List<JsonArray>>(StringComparer.Ordinal);
+            var groups = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
+            var subArrays = new Dictionary<string, List<JsonArray>>(StringComparer.Ordinal);
             var orderedKeys = new List<string>();
 
             foreach (var row in sheet.Rows)
@@ -157,7 +157,7 @@ namespace DevProject.Business.Processors
                 if (!groups.TryGetValue(groupKey, out var parent))
                 {
                     parent = new JsonObject();
-                    groups[groupKey]    = parent;
+                    groups[groupKey] = parent;
                     orderedKeys.Add(groupKey);
                     var arrays = subArrayDefs.Select(_ => new JsonArray()).ToList();
                     subArrays[groupKey] = arrays;
@@ -166,7 +166,7 @@ namespace DevProject.Business.Processors
                 {
                     if (allSubArrayCols.Contains(mapping.SourceColumn)) continue;
                     if (!row.TryGetValue(mapping.SourceColumn, out var cell)) continue;
-                    if (cell.IsEmpty) continue;                    if (!ContainsNestedProperty(parent, mapping.TargetField))
+                    if (cell.IsEmpty) continue; if (!ContainsNestedProperty(parent, mapping.TargetField))
                     {
                         var value = ApplyMappingTransforms(ResolveValue(cell, mapping.ParseJson), mapping);
                         if (value is not null)
@@ -176,9 +176,9 @@ namespace DevProject.Business.Processors
                 var rowSubArrays = subArrays[groupKey];
                 for (var i = 0; i < subArrayDefs.Count; i++)
                 {
-                    var def    = subArrayDefs[i];
+                    var def = subArrayDefs[i];
                     var colSet = subArrayColSets[i];
-                    var entry  = new JsonObject();
+                    var entry = new JsonObject();
 
                     foreach (var mapping in sheetMapping.ColumnMappings)
                     {
@@ -197,7 +197,7 @@ namespace DevProject.Business.Processors
             var result = new JsonArray();
             foreach (var key in orderedKeys)
             {
-                var parent      = groups[key];
+                var parent = groups[key];
                 var rowSubArrays = subArrays[key];
 
                 for (var i = 0; i < subArrayDefs.Count; i++)
@@ -211,12 +211,12 @@ namespace DevProject.Business.Processors
 
         private static JsonArray BuildParentChildArray(ParsedExcelData sheet, SheetMapping sheetMapping)
         {
-            var parentIdCol   = sheetMapping.ParentIdColumn!;
-            var childRefCol   = sheetMapping.ChildParentRefColumn!;
+            var parentIdCol = sheetMapping.ParentIdColumn!;
+            var childRefCol = sheetMapping.ChildParentRefColumn!;
             var childArrayKey = sheetMapping.ChildArrayKey!;
 
-            var parents      = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
-            var parentOrder  = new List<string>();
+            var parents = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
+            var parentOrder = new List<string>();
             var pendingChildren = new List<(string parentRef, JsonObject child)>();
 
             foreach (var row in sheet.Rows)
@@ -226,7 +226,7 @@ namespace DevProject.Business.Processors
                 var obj = BuildObjectFromMappings(row, sheetMapping.ColumnMappings);
 
                 var hasParentRef = row.TryGetValue(childRefCol, out var refCell) && !refCell.IsEmpty;
-                var hasOwnId     = row.TryGetValue(parentIdCol, out var idCell)  && !idCell.IsEmpty;
+                var hasOwnId = row.TryGetValue(parentIdCol, out var idCell) && !idCell.IsEmpty;
 
                 if (hasParentRef)
                 {
@@ -346,17 +346,17 @@ namespace DevProject.Business.Processors
                 return;
             }
 
-            var key  = path[..dotIndex];
+            var key = path[..dotIndex];
             var rest = path[(dotIndex + 1)..];
 
             if (!obj.TryGetPropertyValue(key, out var existing) || existing is not JsonObject nested)
             {
-                nested   = new JsonObject();
+                nested = new JsonObject();
                 obj[key] = nested;
             }
 
             SetNestedProperty(nested, rest, value);
-        }        private static bool ContainsNestedProperty(JsonObject obj, string path)
+        } private static bool ContainsNestedProperty(JsonObject obj, string path)
         {
             var dotIndex = path.IndexOf('.');
             if (dotIndex < 0)
