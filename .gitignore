@@ -92,5 +92,5 @@ ehthumbs.db
 [Dd]esktop.ini
 $RECYCLE.BIN/
 
-# Ignore all uploaded complaint files
-c2030270-saad/wwwroot/uploads/**
+# Ignore all uploaded files
+DevProject/wwwroot/uploads/**

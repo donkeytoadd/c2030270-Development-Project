@@ -1,4 +1,4 @@
-namespace DevProject.Business.Storage
+namespace DevProject.Infrastructure
 {
     using Azure.Storage.Blobs;
     using Microsoft.Extensions.Diagnostics.HealthChecks;

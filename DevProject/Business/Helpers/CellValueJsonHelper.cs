@@ -1,4 +1,4 @@
-namespace DevProject.Business.Getters
+namespace DevProject.Business.Helpers
 {
     using System.Globalization;
     using System.Text.Json.Nodes;

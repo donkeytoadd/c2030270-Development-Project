@@ -6,25 +6,12 @@ namespace DevProject.Business.Processors
     using System.Text.Json.Nodes;
     using Data.Entities;
     using Data.Enums;
-    using DevProject.Business.Getters.Interfaces;
     using Interfaces;
     using Json.Schema;
-    using Microsoft.Extensions.Logging;
 
     public class TmForumSchemaValidationProcessor : ITmForumSchemaValidationProcessor
     {        private static readonly ConcurrentDictionary<string, JsonSchema> SchemaCache =
             new(StringComparer.OrdinalIgnoreCase);
-
-        private readonly ITmForumGitHubRegistryGetter _registry;
-        private readonly ILogger<TmForumSchemaValidationProcessor> _logger;
-
-        public TmForumSchemaValidationProcessor(
-            ITmForumGitHubRegistryGetter registry,
-            ILogger<TmForumSchemaValidationProcessor> logger)
-        {
-            _registry = registry;
-            _logger   = logger;
-        }
 
         public ValidationReport Validate(List<JsonNode> resources, string apiId)
         {
@@ -103,26 +90,13 @@ namespace DevProject.Business.Processors
             };
         }
 
-        private JsonSchema? LoadSchema(string apiId)
+        private static JsonSchema? LoadSchema(string apiId)
         {
             return SchemaCache.GetOrAdd(apiId, id =>
             {
-                var schemaText = TryLoadFromRegistry(id) ?? TryLoadEmbedded(id);
+                var schemaText = TryLoadEmbedded(id);
                 return schemaText is null ? null! : JsonSchema.FromText(schemaText);
             });
-        }
-
-        private string? TryLoadFromRegistry(string apiId)
-        {
-            try
-            {                return Task.Run(() => _registry.GetValidationSchemaAsync(apiId)).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex,
-                    "GitHub registry schema unavailable for {ApiId}, using embedded fallback.", apiId);
-                return null;
-            }
         }
 
         private static string? TryLoadEmbedded(string apiId)

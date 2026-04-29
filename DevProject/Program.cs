@@ -2,7 +2,6 @@ using Azure.Storage.Blobs;
 using DevProject.Business.Storage;
 using DevProject.Business.Storage.Interfaces;
 using DevProject.Infrastructure;
-using DevProject.Infrastructure.GitHub;
 using DevProject.Workers;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
@@ -15,20 +14,6 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
-
-builder.Services.AddOptions<TmForumGitHubSettings>()
-    .Configure(opts => builder.Configuration.GetSection(TmForumGitHubSettings.Section).Bind(opts));
-
-builder.Services.AddHttpClient("TmForumGitHub", (sp, client) =>
-{
-    var settings = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<TmForumGitHubSettings>>().Value;
-    client.BaseAddress = new Uri("https://api.github.com/");
-    client.DefaultRequestHeaders.Add("User-Agent", "DevProject-TmForumRegistry");
-    client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-    if (!string.IsNullOrWhiteSpace(settings.PersonalAccessToken))
-        client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", settings.PersonalAccessToken);
-});
 
 builder.Services.AddEndpointsApiExplorer();
 
