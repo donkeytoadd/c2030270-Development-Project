@@ -1,4 +1,4 @@
-namespace DevProject.Tests.Controllers
+﻿namespace DevProject.Tests.Controllers
 {
     using DevProject.Business.Processors.Interfaces;
     using DevProject.Business.Storage.Interfaces;
@@ -15,7 +15,7 @@ namespace DevProject.Tests.Controllers
         private FileUploadRequest CreateMockFile(string fileName, long fileSize, string content)
         {
             var mockFile = new Mock<IFormFile>();
-            var stream   = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+            var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
 
             mockFile.Setup(f => f.FileName).Returns(fileName);
             mockFile.Setup(f => f.Length).Returns(fileSize);
@@ -30,7 +30,7 @@ namespace DevProject.Tests.Controllers
             new ParsedWorkbook
             {
                 WorkbookName = workbookName,
-                Sheets       = new List<ParsedExcelData>(sheets)
+                Sheets = new List<ParsedExcelData>(sheets)
             };
 
         private void SetupFileStorageSave(string returnedFileId = "fake-id.xlsx")
@@ -48,9 +48,9 @@ namespace DevProject.Tests.Controllers
                 new ParsedExcelData
                 {
                     SpreadsheetName = "Products",
-                    ColumnNames     = new List<string> { "Id", "Name" },
-                    Rows            = new List<Dictionary<string, CellValue>>(),
-                    TotalRows       = 0
+                    ColumnNames = new List<string> { "Id", "Name" },
+                    Rows = new List<Dictionary<string, CellValue>>(),
+                    TotalRows = 0
                 });
 
             SetupFileStorageSave("fake-id.xlsx");
@@ -60,12 +60,12 @@ namespace DevProject.Tests.Controllers
 
             var mockFile = CreateMockFile("products.xlsx", 1024, "mock content");
 
-            var sut    = CreateTestSubject();
+            var sut = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
 
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var json     = System.Text.Json.JsonSerializer.Serialize(okResult.Value);
-            var root     = System.Text.Json.JsonDocument.Parse(json).RootElement;
+            var json = System.Text.Json.JsonSerializer.Serialize(okResult.Value);
+            var root = System.Text.Json.JsonDocument.Parse(json).RootElement;
 
             Assert.Equal("products", root.GetProperty("WorkbookName").GetString());
             Assert.EndsWith(".xlsx", root.GetProperty("FileId").GetString());
@@ -74,7 +74,7 @@ namespace DevProject.Tests.Controllers
             var firstSheet = root.GetProperty("Sheets")[0];
             Assert.Equal("Products", firstSheet.GetProperty("SheetName").GetString());
             Assert.Equal(2, firstSheet.GetProperty("ColumnNames").GetArrayLength());
-            Assert.Equal("Id",   firstSheet.GetProperty("ColumnNames")[0].GetString());
+            Assert.Equal("Id", firstSheet.GetProperty("ColumnNames")[0].GetString());
             Assert.Equal("Name", firstSheet.GetProperty("ColumnNames")[1].GetString());
             Assert.Equal(0, firstSheet.GetProperty("TotalRows").GetInt32());
         }
@@ -86,16 +86,16 @@ namespace DevProject.Tests.Controllers
                 new ParsedExcelData
                 {
                     SpreadsheetName = "Service",
-                    ColumnNames     = new List<string> { "name", "description" },
-                    Rows            = new List<Dictionary<string, CellValue>>(),
-                    TotalRows       = 0
+                    ColumnNames = new List<string> { "name", "description" },
+                    Rows = new List<Dictionary<string, CellValue>>(),
+                    TotalRows = 0
                 },
                 new ParsedExcelData
                 {
                     SpreadsheetName = "RelatedParty",
-                    ColumnNames     = new List<string> { "id", "role" },
-                    Rows            = new List<Dictionary<string, CellValue>>(),
-                    TotalRows       = 0
+                    ColumnNames = new List<string> { "id", "role" },
+                    Rows = new List<Dictionary<string, CellValue>>(),
+                    TotalRows = 0
                 });
 
             SetupFileStorageSave("fake-id.xlsx");
@@ -105,15 +105,15 @@ namespace DevProject.Tests.Controllers
 
             var mockFile = CreateMockFile("catalogue.xlsx", 2048, "mock content");
 
-            var sut    = CreateTestSubject();
+            var sut = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
 
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var json     = System.Text.Json.JsonSerializer.Serialize(okResult.Value);
-            var root     = System.Text.Json.JsonDocument.Parse(json).RootElement;
+            var json = System.Text.Json.JsonSerializer.Serialize(okResult.Value);
+            var root = System.Text.Json.JsonDocument.Parse(json).RootElement;
 
             Assert.Equal(2, root.GetProperty("TotalSheets").GetInt32());
-            Assert.Equal("Service",      root.GetProperty("Sheets")[0].GetProperty("SheetName").GetString());
+            Assert.Equal("Service", root.GetProperty("Sheets")[0].GetProperty("SheetName").GetString());
             Assert.Equal("RelatedParty", root.GetProperty("Sheets")[1].GetProperty("SheetName").GetString());
         }
 
@@ -122,7 +122,7 @@ namespace DevProject.Tests.Controllers
         {
             var mockFile = CreateMockFile("file.xlsx", 0, "mock");
 
-            var sut    = CreateTestSubject();
+            var sut = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
 
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
@@ -134,7 +134,7 @@ namespace DevProject.Tests.Controllers
         {
             var mockFile = CreateMockFile("file.xlsx", 11 * 1024 * 1024, "mock");
 
-            var sut    = CreateTestSubject();
+            var sut = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
 
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
@@ -149,7 +149,7 @@ namespace DevProject.Tests.Controllers
         {
             var mockFile = CreateMockFile(fileName, 1024, "mock content");
 
-            var sut    = CreateTestSubject();
+            var sut = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
 
             Assert.IsType<BadRequestObjectResult>(result);
@@ -165,7 +165,7 @@ namespace DevProject.Tests.Controllers
 
             var mockFile = CreateMockFile("file.xlsx", 1024, "mock content");
 
-            var sut    = CreateTestSubject();
+            var sut = CreateTestSubject();
             var result = await sut.UploadFile(mockFile);
 
             var unprocessable = Assert.IsType<UnprocessableEntityObjectResult>(result);
@@ -187,7 +187,7 @@ namespace DevProject.Tests.Controllers
 
             var mockRequest = new FileUploadRequest { File = mockFile.Object };
 
-            var sut    = CreateTestSubject();
+            var sut = CreateTestSubject();
             var result = await sut.UploadFile(mockRequest);
 
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
@@ -203,12 +203,12 @@ namespace DevProject.Tests.Controllers
                 .Returns(BuildWorkbook("wb", new ParsedExcelData
                 {
                     SpreadsheetName = "Sheet1",
-                    ColumnNames     = new List<string>(),
-                    Rows            = new List<Dictionary<string, CellValue>>()
+                    ColumnNames = new List<string>(),
+                    Rows = new List<Dictionary<string, CellValue>>()
                 }));
 
             var mockFile = CreateMockFile("test.xlsx", 512, "content");
-            var sut      = CreateTestSubject();
+            var sut = CreateTestSubject();
             await sut.UploadFile(mockFile);
 
             automocker.GetMock<IFileStorage>()

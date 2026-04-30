@@ -3,8 +3,11 @@
     using System.Text.Json.Nodes;
     using Data.Entities;
     using Data.Enums;
+    using DocumentFormat.OpenXml.Spreadsheet;
     using Helpers;
     using Interfaces;
+    using CellValue = Data.Entities.CellValue;
+
     public class WorkbookConversionProcessor : IWorkbookConversionProcessor
     {
         public WorkbookConversionResult Convert(ParsedWorkbook workbook, MappingTemplate template)
@@ -36,7 +39,7 @@
 
                 if (sheet is null)
                 {
-                    warnings.Add($”Sheet '{sheetMapping.SheetName}' not found in workbook - mapping skipped.”);
+                    warnings.Add($"Sheet {sheetMapping.SheetName} not found in workbook -mapping skipped.");
                     continue;
                 }
 
@@ -83,7 +86,7 @@
 
             if (firstRow is null)
             {
-                warnings.Add($"Sheet '{sheetMapping.SheetName}' contains no data rows â€” no top-level fields written.");
+                warnings.Add($"Sheet '{sheetMapping.SheetName}' contains no data rows - no top-level fields written.");
                 return;
             }
 

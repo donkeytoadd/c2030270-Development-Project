@@ -159,7 +159,7 @@
             <div class="validation-header">
               @if (result.validation.isValid) {
                 <mat-icon class="validation-icon">verified</mat-icon>
-                <span class="validation-title">Schema valid — output complies with {{ result.apiId }}</span>
+                <span class="validation-title">Schema valid - output complies with {{ result.apiId }}</span>
               } @else {
                 <mat-icon class="validation-icon">warning</mat-icon>
                 <span class="validation-title">{{ result.validation.totalIssues }} schema issue{{ result.validation.totalIssues === 1 ? '' : 's' }} against {{ result.apiId }}</span>
@@ -175,7 +175,7 @@
                   @if (issue.severity === 'SchemaArtefact') {
                     <div class="validation-issue validation-issue-artefact">
                       <code class="issue-field issue-field-artefact">{{ issue.field }}</code>
-                      <span class="issue-message issue-message-artefact">Schema composition artefact — property is valid per API documentation but forbidden by a sub-schema branch.</span>
+                      <span class="issue-message issue-message-artefact">Schema composition artefact - property is valid per API documentation but forbidden by a sub-schema branch.</span>
                     </div>
                   } @else {
                     <div class="validation-issue">

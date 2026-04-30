@@ -1,4 +1,4 @@
-namespace DevProject.Tests.Business.Getters
+﻿namespace DevProject.Tests.Business.Getters
 {
     using ClosedXML.Excel;
     using DevProject.Business.Getters;
@@ -7,7 +7,7 @@ namespace DevProject.Tests.Business.Getters
     {
         private IXLRangeRow BuildHeaderRow(Action<IXLWorksheet> configure)
         {
-            var workbook  = new XLWorkbook();
+            var workbook = new XLWorkbook();
             var worksheet = workbook.AddWorksheet("Sheet1");
             configure(worksheet);
             return worksheet.RangeUsed()!.RowsUsed().First();
@@ -28,7 +28,7 @@ namespace DevProject.Tests.Business.Getters
             var result = sut.Get(mockRow, 3);
 
             Assert.Equal(3, result.Count);
-            
+
             Assert.Equal("Id", result[0].Name);
             Assert.Equal("Name", result[1].Name);
             Assert.Equal("Age", result[2].Name);
@@ -48,7 +48,7 @@ namespace DevProject.Tests.Business.Getters
             var result = sut.Get(mockRow, 3);
 
             Assert.Equal(2, result.Count);
-            
+
             Assert.Equal("Id", result[0].Name);
             Assert.Equal("Name", result[1].Name);
         }

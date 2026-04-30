@@ -1,4 +1,4 @@
-namespace DevProject.Tests.Business.Processors
+﻿namespace DevProject.Tests.Business.Processors
 {
     using ClosedXML.Excel;
     using DevProject.Business.Getters.Interfaces;
@@ -10,7 +10,7 @@ namespace DevProject.Tests.Business.Processors
     {
         private IEnumerable<IXLRangeRow> BuildDataRows(Action<IXLWorksheet> configure)
         {
-            var workbook  = new XLWorkbook();
+            var workbook = new XLWorkbook();
             var worksheet = workbook.AddWorksheet("Sheet1");
             configure(worksheet);
             return worksheet.RangeUsed().RowsUsed().Skip(1);
@@ -25,7 +25,7 @@ namespace DevProject.Tests.Business.Processors
                 new Column { ColumnIndex = 2, Name = "Name" }
             };
 
-            var idValue   = CellValue.FromNumber(1);
+            var idValue = CellValue.FromNumber(1);
             var nameValue = CellValue.FromText("Alice");
 
             this.automocker.GetMock<ICellValueGetter>()

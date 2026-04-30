@@ -1,4 +1,4 @@
-namespace DevProject.Tests.Business.Processors
+﻿namespace DevProject.Tests.Business.Processors
 {
     using ClosedXML.Excel;
     using DevProject.Business.Getters.Interfaces;
@@ -12,7 +12,7 @@ namespace DevProject.Tests.Business.Processors
     {
         private Stream BuildWorkbook(Action<IXLWorksheet> configure, string sheetName = "Sheet1")
         {
-            var workbook  = new XLWorkbook();
+            var workbook = new XLWorkbook();
             var worksheet = workbook.AddWorksheet(sheetName);
             configure(worksheet);
             var stream = new MemoryStream();
@@ -58,12 +58,12 @@ namespace DevProject.Tests.Business.Processors
             {
                 new Dictionary<string, CellValue>
                 {
-                    ["Id"]   = CellValue.FromNumber(1),
+                    ["Id"] = CellValue.FromNumber(1),
                     ["Name"] = CellValue.FromText("Alice")
                 },
                 new Dictionary<string, CellValue>
                 {
-                    ["Id"]   = CellValue.FromNumber(2),
+                    ["Id"] = CellValue.FromNumber(2),
                     ["Name"] = CellValue.FromText("Bob")
                 }
             };
@@ -86,7 +86,7 @@ namespace DevProject.Tests.Business.Processors
                 worksheet.Cell(3, 2).Value = "Bob";
             }, "Products");
 
-            var sut    = this.CreateTestSubject();
+            var sut = this.CreateTestSubject();
             var result = sut.Process(stream, "products.xlsx");
 
             Assert.Equal(1, result.TotalSheets);
@@ -106,7 +106,7 @@ namespace DevProject.Tests.Business.Processors
         {
             var stream = BuildWorkbook(_ => { }, "EmptySheet");
 
-            var sut    = this.CreateTestSubject();
+            var sut = this.CreateTestSubject();
             var result = sut.Process(stream, "empty.xlsx");
 
             Assert.Equal(1, result.TotalSheets);
@@ -132,7 +132,7 @@ namespace DevProject.Tests.Business.Processors
                 worksheet.Cell(2, 1).Value = 1;
             });
 
-            var sut    = this.CreateTestSubject();
+            var sut = this.CreateTestSubject();
             var result = sut.Process(stream, "test.xlsx");
 
             Assert.Equal(1, result.TotalSheets);
@@ -165,10 +165,10 @@ namespace DevProject.Tests.Business.Processors
 
             var stream = BuildMultiSheetWorkbook(
                 ("Alpha", ws => { ws.Cell(1, 1).Value = "Name"; ws.Cell(2, 1).Value = "Alice"; }),
-                ("Beta",  ws => { ws.Cell(1, 1).Value = "Name"; ws.Cell(2, 1).Value = "Bob"; }),
+                ("Beta", ws => { ws.Cell(1, 1).Value = "Name"; ws.Cell(2, 1).Value = "Bob"; }),
                 ("Gamma", ws => { ws.Cell(1, 1).Value = "Name"; ws.Cell(2, 1).Value = "Carol"; }));
 
-            var sut    = this.CreateTestSubject();
+            var sut = this.CreateTestSubject();
             var result = sut.Process(stream, "multi.xlsx");
 
             Assert.Equal(3, result.TotalSheets);
@@ -178,7 +178,7 @@ namespace DevProject.Tests.Business.Processors
         public void ProcessPreservesSheetOrderForMultiSheetWorkbook()
         {
             var columns = new List<Column> { new Column { ColumnIndex = 1, Name = "Name" } };
-            var rows    = new List<Dictionary<string, CellValue>>();
+            var rows = new List<Dictionary<string, CellValue>>();
 
             this.automocker.GetMock<IColumnGetter>()
                 .Setup(x => x.Get(It.IsAny<IXLRangeRow>(), It.IsAny<int>()))
@@ -189,23 +189,23 @@ namespace DevProject.Tests.Business.Processors
                 .Returns(rows);
 
             var stream = BuildMultiSheetWorkbook(
-                ("First",  ws => ws.Cell(1, 1).Value = "Name"),
+                ("First", ws => ws.Cell(1, 1).Value = "Name"),
                 ("Second", ws => ws.Cell(1, 1).Value = "Name"),
-                ("Third",  ws => ws.Cell(1, 1).Value = "Name"));
+                ("Third", ws => ws.Cell(1, 1).Value = "Name"));
 
-            var sut    = this.CreateTestSubject();
+            var sut = this.CreateTestSubject();
             var result = sut.Process(stream, "order.xlsx");
 
-            Assert.Equal("First",  result.Sheets[0].SpreadsheetName);
+            Assert.Equal("First", result.Sheets[0].SpreadsheetName);
             Assert.Equal("Second", result.Sheets[1].SpreadsheetName);
-            Assert.Equal("Third",  result.Sheets[2].SpreadsheetName);
+            Assert.Equal("Third", result.Sheets[2].SpreadsheetName);
         }
 
         [Fact]
         public void ProcessIncludesEmptySheetAmongValidSheets()
         {
             var columns = new List<Column> { new Column { ColumnIndex = 1, Name = "Name" } };
-            var rows    = new List<Dictionary<string, CellValue>>
+            var rows = new List<Dictionary<string, CellValue>>
             {
                 new Dictionary<string, CellValue> { ["Name"] = CellValue.FromText("Alice") }
             };
@@ -219,11 +219,11 @@ namespace DevProject.Tests.Business.Processors
                 .Returns(rows);
 
             var stream = BuildMultiSheetWorkbook(
-                ("Data",  ws => { ws.Cell(1, 1).Value = "Name"; ws.Cell(2, 1).Value = "Alice"; }),
-                ("Empty", ws => {  }),
-                ("More",  ws => { ws.Cell(1, 1).Value = "Name"; ws.Cell(2, 1).Value = "Bob"; }));
+                ("Data", ws => { ws.Cell(1, 1).Value = "Name"; ws.Cell(2, 1).Value = "Alice"; }),
+                ("Empty", ws => { }),
+                ("More", ws => { ws.Cell(1, 1).Value = "Name"; ws.Cell(2, 1).Value = "Bob"; }));
 
-            var sut    = this.CreateTestSubject();
+            var sut = this.CreateTestSubject();
             var result = sut.Process(stream, "test.xlsx");
 
             Assert.Equal(3, result.TotalSheets);
@@ -254,7 +254,7 @@ namespace DevProject.Tests.Business.Processors
                 ws.Cell(1, 2).Value = "Value";
             }, "HeadersOnly");
 
-            var sut    = this.CreateTestSubject();
+            var sut = this.CreateTestSubject();
             var result = sut.Process(stream, "headers.xlsx");
 
             var sheet = result.Sheets[0];
